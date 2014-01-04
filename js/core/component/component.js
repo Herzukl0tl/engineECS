@@ -7,7 +7,7 @@ component._definitions = Object.create(null);
 component.define = function componentDefine(name, definition) {
   var componentDefinition = new ComponentDefinition(name, definition);
 
-  component._definitions = componentDefinition;
+  component._definitions[name] = componentDefinition;
 
   return componentDefinition;
 };
