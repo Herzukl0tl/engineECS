@@ -9,8 +9,9 @@ ComponentDefinition.prototype.of = function ComponentDefinitionOf(entity, option
   var component = this._instances[entity];
 
   if (arguments.length === 2) {
-    if (options.required && component === undefined) {
-      throw new Error();
+    if (component === undefined) {
+      if (options.required) throw new Error();
+      else if (options.add) component = this.add(entity);
     }
   }
 
@@ -22,6 +23,8 @@ ComponentDefinition.prototype.in = function ComponentDefinitionIn(entity) {
 };
 
 ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
+  if (this.in(entity)) throw new Error();
+
   var component = this.definition.apply(this, arguments);
 
   this._instances[entity] = component;
