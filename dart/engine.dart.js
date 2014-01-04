@@ -167,8 +167,16 @@ Component: {"": "Object;_definitions",
 }}],
 ["", "component/ComponentDefinition.dart", , U, {
 ComponentDefinition: {"": "Object;name,definition,_instances",
+  within$1: function(entity) {
+    var t1 = this._instances;
+    if (t1.$index(t1, entity) != null)
+      return true;
+    return false;
+  },
   add$10: function(_, entity, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
     var $arguments, component, t1;
+    if (this.within$1(entity))
+      throw H.wrapException(new P.Error());
     $arguments = P.List_List(null, null);
     $arguments.push(arg1);
     component = H.Primitives_applyFunction(this.definition, $arguments, P.Function__toMangledNames(null));
@@ -949,12 +957,18 @@ _LinkedHashMap: {"": "Object;_length,_strings,_nums,_rest,_first,_last,_modifica
     return t1;
   },
   $index: function(_, key) {
-    var strings, cell, rest, bucket, index;
+    var strings, cell, nums, rest, bucket, index;
     if (typeof key === "string" && key !== "__proto__") {
       strings = this._strings;
       if (strings == null)
         return;
       cell = strings[key];
+      return cell == null ? null : cell.get$_value();
+    } else if (typeof key === "number" && (key & 0x3ffffff) === key) {
+      nums = this._nums;
+      if (nums == null)
+        return;
+      cell = nums[key];
       return cell == null ? null : cell.get$_value();
     } else {
       rest = this._rest;
@@ -1300,53 +1314,6 @@ Function__toMangledNames: function(namedArguments) {
   return;
 },
 
-Error_safeToString: function(object) {
-  var buffer, t1, i, codeUnit, t2, charCodes;
-  if (typeof object === "number" || typeof object === "boolean" || null == object)
-    return J.toString$0(object);
-  if (typeof object === "string") {
-    buffer = new P.StringBuffer("");
-    buffer._contents = "\"";
-    for (t1 = object.length, i = 0; i < t1; ++i) {
-      codeUnit = C.JSString_methods.codeUnitAt$1(object, i);
-      if (codeUnit <= 31)
-        if (codeUnit === 10)
-          buffer._contents = buffer._contents + "\\n";
-        else if (codeUnit === 13)
-          buffer._contents = buffer._contents + "\\r";
-        else if (codeUnit === 9)
-          buffer._contents = buffer._contents + "\\t";
-        else {
-          buffer._contents = buffer._contents + "\\x";
-          if (codeUnit < 16)
-            buffer._contents = buffer._contents + "0";
-          else {
-            buffer._contents = buffer._contents + "1";
-            codeUnit -= 16;
-          }
-          t2 = codeUnit < 10 ? 48 + codeUnit : 87 + codeUnit;
-          charCodes = P.List_List$filled(1, t2, J.JSInt);
-          charCodes.$builtinTypeInfo = [J.JSInt];
-          t2 = H.Primitives_stringFromCharCodes(charCodes);
-          buffer._contents = buffer._contents + t2;
-        }
-      else if (codeUnit === 92)
-        buffer._contents = buffer._contents + "\\\\";
-      else if (codeUnit === 34)
-        buffer._contents = buffer._contents + "\\\"";
-      else {
-        charCodes = P.List_List$filled(1, codeUnit, J.JSInt);
-        charCodes.$builtinTypeInfo = [J.JSInt];
-        t2 = H.Primitives_stringFromCharCodes(charCodes);
-        buffer._contents = buffer._contents + t2;
-      }
-    }
-    buffer._contents = buffer._contents + "\"";
-    return buffer._contents;
-  }
-  return "Instance of '" + H.Primitives_objectTypeName(object) + "'";
-},
-
 identical: function(a, b) {
   return a == null ? b == null : a === b;
 },
@@ -1419,7 +1386,54 @@ NoSuchMethodError_toString_closure: {"": "Closure;box_0",
   "+call:2:0": 0
 },
 
-Error: {"": "Object;"},
+Error: {"": "Object;", static: {
+Error_safeToString: function(object) {
+  var buffer, t1, i, codeUnit, t2, charCodes;
+  if (typeof object === "number" || typeof object === "boolean" || null == object)
+    return J.toString$0(object);
+  if (typeof object === "string") {
+    buffer = new P.StringBuffer("");
+    buffer._contents = "\"";
+    for (t1 = object.length, i = 0; i < t1; ++i) {
+      codeUnit = C.JSString_methods.codeUnitAt$1(object, i);
+      if (codeUnit <= 31)
+        if (codeUnit === 10)
+          buffer._contents = buffer._contents + "\\n";
+        else if (codeUnit === 13)
+          buffer._contents = buffer._contents + "\\r";
+        else if (codeUnit === 9)
+          buffer._contents = buffer._contents + "\\t";
+        else {
+          buffer._contents = buffer._contents + "\\x";
+          if (codeUnit < 16)
+            buffer._contents = buffer._contents + "0";
+          else {
+            buffer._contents = buffer._contents + "1";
+            codeUnit -= 16;
+          }
+          t2 = codeUnit < 10 ? 48 + codeUnit : 87 + codeUnit;
+          charCodes = P.List_List$filled(1, t2, J.JSInt);
+          charCodes.$builtinTypeInfo = [J.JSInt];
+          t2 = H.Primitives_stringFromCharCodes(charCodes);
+          buffer._contents = buffer._contents + t2;
+        }
+      else if (codeUnit === 92)
+        buffer._contents = buffer._contents + "\\\\";
+      else if (codeUnit === 34)
+        buffer._contents = buffer._contents + "\\\"";
+      else {
+        charCodes = P.List_List$filled(1, codeUnit, J.JSInt);
+        charCodes.$builtinTypeInfo = [J.JSInt];
+        t2 = H.Primitives_stringFromCharCodes(charCodes);
+        buffer._contents = buffer._contents + t2;
+      }
+    }
+    buffer._contents = buffer._contents + "\"";
+    return buffer._contents;
+  }
+  return "Instance of '" + H.Primitives_objectTypeName(object) + "'";
+}}
+},
 
 NullThrownError: {"": "Error;",
   toString$0: function(_) {

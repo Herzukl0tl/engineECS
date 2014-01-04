@@ -12,12 +12,11 @@ class ComponentDefinition{
     Object component = this._instances[entity];
     
     if(options != null){
-      if (options["required"] && component == null) {
-        throw new Error();
+      if(component == null){
+        if (options["required"]) throw new Error();
+        else if(options["add"]) component = this.add(entity);
       }
     }
-    
-    return component || null;
   }
   
   bool within(int entity){
@@ -27,6 +26,8 @@ class ComponentDefinition{
   }
   
   Map add(int entity, [arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9]){
+    if (this.within(entity)) throw new Error();
+    
     List arguments = new List();
     
     if(arg1!=null) arguments.add(arg1);

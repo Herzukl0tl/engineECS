@@ -8,5 +8,4 @@ void main() {
   });
   ComponentDefinition lel = component.get("myFirstComponent");
   lel.add(0, "yolo");
-  
 }
