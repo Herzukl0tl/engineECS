@@ -1,3 +1,5 @@
+var nextEntityId = 1;
+
 function FactoryDefinition(name, definitionOrSource) {
   this.name = name;
 
@@ -11,7 +13,7 @@ function FactoryDefinition(name, definitionOrSource) {
 }
 
 FactoryDefinition.prototype.create = function FactoryDefinitionCreate(options) {
-  var entityId = entity._nextEntityId++;
+  var entityId = nextEntityId++;
 
   this.definition(entityId);
 
@@ -20,7 +22,6 @@ FactoryDefinition.prototype.create = function FactoryDefinitionCreate(options) {
   }
 
   this._entities.push(entityId);
-  //entity.create(entityId);
 
   return entityId;
 };
