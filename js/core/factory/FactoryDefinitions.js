@@ -12,22 +12,27 @@ function FactoryDefinition(name, definitionOrSource) {
   this._entities = [];
 }
 
-FactoryDefinition.prototype.create = function FactoryDefinitionCreate() {
+FactoryDefinition.prototype.create = function FactoryDefinitionCreate(options) {
   var entityId = nextEntityId++;
 
-  this.definition.apply(this, arguments);
+  this.definition(entityId);
+
+  for (var path in options) {
+    set(entityId, path, options[path]);
+  }
+
   this._entities.push(entityId);
 
   return entityId;
 };
 
 FactoryDefinition.prototype.compile = function FactoryDefinitionCompile(source) {
-  var definition = 'return ' + this.name + 'Definition(entityId, options) {',
+  var definition = 'return ' + this.name + 'Definition(entityId) {',
     i, path, key;
 
   if ('extends' in source) {
     for (i = source.extends.length; i >= 0; i -= 1) {
-      definition += 'factory(' + source.extends[i] + ').definition(entityId, options)';
+      definition += 'factory(' + source.extends[i] + ').definition(entityId)';
     }
   }
 
@@ -37,29 +42,9 @@ FactoryDefinition.prototype.compile = function FactoryDefinitionCompile(source) 
     }
   }
 
-  if ('values' in source) {
-    for (path in source.values) {
-      definition += 'set(entityId, "' + path + '", ' + source.values[path] + ');';
-    }
-  }
-
-  if ('arguments' in source) {
-    for (key in source.arguments) {
-      definition += 'if ("' + key + '" in options) {';
-
-      if (typeof source.arguments[key] === 'string') {
-        definition += 'set(entityId, "' + source.arguments[key] + '", options[' + key + '])}';
-      } else {
-        definition += 'set(entityId, "' + source.arguments[key].path + '", options[' + key + ']);';
-
-        if ('defaults' in source.arguments[key]) {
-          definition += '} else {' +
-            'set(entityId, "' + source.arguments[key].path + '", ' + source.arguments[key].defaults + ')' +
-          '}';
-        } else {
-          definition += '}';
-        }
-      }
+  if ('defaults' in source) {
+    for (path in source.defaults) {
+      definition += 'set(entityId, "' + path + '", ' + source.defaults[path] + ');';
     }
   }
 
