@@ -70,11 +70,24 @@ EntityDefinition.prototype.source = function EntityDefinitionSource(value) {
     return this._source;
   }
 
-  this._source = value;
+  if ('extends' in value) {
+    this._source.extends = value.extends;
+    this._componentsHaveChanged = true;
+    this._defaultsHaveChanged = true;
+    this._sourceHasChanged = true;
+  }
 
-  this._sourceHasChanged = true;
-  this._componentsHaveChanged = true;
-  this._defaultsHaveChanged = true;
+  if ('components' in value) {
+    this._source.components = value.components;
+    this._componentsHaveChanged = true;
+    this._sourceHasChanged = true;
+  }
+
+  if ('defaults' in value) {
+    this._source.defaults = value.defaults;
+    this._defaultsHaveChanged = true;
+    this._sourceHasChanged = true;
+  }
 };
 
 EntityDefinition.prototype.components = function EntityDefinitionComponents() {
