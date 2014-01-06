@@ -9,13 +9,13 @@ ComponentDefinition.prototype.of = function ComponentDefinitionOf(entity, option
   var component = this._instances[entity];
 
   if (arguments.length === 2) {
-    if (component === undefined) {
+    if (!this.in(entity)) {
       if (options.required) throw new Error();
       else if (options.add) component = this.add(entity);
     }
   }
 
-  return component || null;
+  return component;
 };
 
 ComponentDefinition.prototype.in = function ComponentDefinitionIn(entity) {
