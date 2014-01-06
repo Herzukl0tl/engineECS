@@ -65,15 +65,22 @@ FactoryDefinition.prototype.source = function FactoryDefinitionSource(value) {
 FactoryDefinition.prototype.components = function FactoryDefinitionComponents() {
   if (this._componentsHaveChanged) {
     var scope = Object.create(null),
-      keys = [];
+      keys = [],
+      length;
 
     this._components.length = 0;
     this._components.push.apply(this._components, this._source.components);
 
     expandSourceProperty(this, 'components', scope, keys);
 
-    for (var i = keys.length - 1; i >= 0; i -= 1) {
+    length = keys.length;
+
+    for (var i = 0; i < length; i += 1) {
       var components = scope[keys[i]];
+
+      if (components === undefined) {
+        continue;
+      }
 
       outer: for (var j = components.length - 1; j >= 0; j -= 1) {
         var item = components[j];
@@ -103,6 +110,10 @@ FactoryDefinition.prototype.defaults = function FactoryDefinitionDefaults() {
 
     for (var i = keys.length - 1; i >= 0; i -= 1) {
       var defaults = scope[keys[i]];
+
+      if (defaults === undefined) {
+        continue;
+      }
 
       for (var property in defaults) {
         var paths = defaults[property],
@@ -170,10 +181,8 @@ FactoryDefinition.prototype.compile = function FactoryDefinitionCompile() {
 };
 
 function expandSourceProperty(self, property, scope, keys) {
-  if (property in self._source) {
-    scope[self.name] = self._source.defaults;
-    keys.push(self.name);
-  }
+  scope[self.name] = self._source[property];
+  keys.push(self.name);
 
   if (!('extends' in self._source)) {
     return;
@@ -190,12 +199,10 @@ function expandSourceProperty(self, property, scope, keys) {
     }
 
     if ('extends' in source) {
-      stack.push.apply(stack, source.extends);
+      stack.unshift.apply(stack, source.extends);
     }
 
-    if (property in source) {
-      scope[current] = source[property];
-      keys.push(current);
-    }
+    scope[current] = source[property];
+    keys.push(current);
   }
 }
