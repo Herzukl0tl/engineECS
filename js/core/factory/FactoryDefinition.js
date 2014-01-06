@@ -2,6 +2,7 @@ var nextEntityId = 1;
 
 function FactoryDefinition(name, source) {
   this.name = name;
+  this.definition = null;
 
   this._source = source;
   this._components = [];
@@ -12,8 +13,6 @@ function FactoryDefinition(name, source) {
   this._defaultsHaveChanged = true;
 
   this._entities = [];
-
-  this.compile();
 }
 
 FactoryDefinition.prototype.create = function FactoryDefinitionCreate(options) {
@@ -30,13 +29,13 @@ FactoryDefinition.prototype.create = function FactoryDefinitionCreate(options) {
       continue;
     }
 
-    var $0 = component(key).of(entity),
+    var root = component(key).of(entity),
       paths = options[key];
 
     for (var path in paths) {
       var properties = path.split('.'),
         length = properties.length - 1,
-        dest = $0;
+        dest = root;
 
       for (var i = 0; i < length; i += 1) {
         dest = dest[properties[i]];
@@ -65,25 +64,27 @@ FactoryDefinition.prototype.source = function FactoryDefinitionSource(value) {
 
 FactoryDefinition.prototype.components = function FactoryDefinitionComponents() {
   if (this._componentsHaveChanged) {
+    var scope = Object.create(null),
+      keys = [];
+
     this._components.length = 0;
+    this._components.push.apply(this._components, this._source.components);
 
-    if ('components' in this._source) {
-      this._components.push.apply(this._components, this._source.components);
-    }
+    expandSourceProperty(this, 'components', scope, keys);
 
-    if ('extends' in this._source) {
-      for (var i = this._source.extends.length - 1; i >= 0; i -= 1) {
-        var components = factory(this._source.extends[i]).components();
+    for (var i = keys.length - 1; i >= 0; i -= 1) {
+      var components = scope[keys[i]];
 
-        outer: for (var j = components.length - 1; j >= 0; j -= 1) {
-          for (var k = this._components.length - 1; k >= 0; k -= 1) {
-            if (components[j] === this._components[k]) {
-              continue outer;
-            }
+      outer: for (var j = components.length - 1; j >= 0; j -= 1) {
+        var item = components[j];
+
+        for (var k = this._components.length - 1; k >= 0; k -= 1) {
+          if (item === this._components[k]) {
+            continue outer;
           }
-
-          this._components.push(components[j]);
         }
+
+        this._components.push(item);
       }
     }
 
@@ -95,36 +96,26 @@ FactoryDefinition.prototype.components = function FactoryDefinitionComponents() 
 
 FactoryDefinition.prototype.defaults = function FactoryDefinitionDefaults() {
   if (this._defaultsHaveChanged) {
-    for (var property in this._defaults) {
-      delete this._defaults[key];
-    }
+    var scope = Object.create(null),
+      keys = [];
 
-    if ('defaults' in this._source) {
-      for (var property in this._source.defaults) {
-        var paths = defaults[property];
+    expandSourceProperty(this, 'defaults', scope, keys);
 
-        this._defaults[property] = Object.create(null);
+    for (var i = keys.length - 1; i >= 0; i -= 1) {
+      var defaults = scope[keys[i]];
+
+      for (var property in defaults) {
+        var paths = defaults[property],
+          dest;
+
+        if (!(property in this._defaults)) {
+          this._defaults[property] = Object.create(null);
+        }
+
+        dest = this._defaults[property];
 
         for (var path in paths) {
-          this._defaults[property][path] = paths[path];
-        }
-      }
-    }
-
-    if ('extends' in this._source) {
-      for (var i = this._source.extends.length - 1; i >= 0; i -= 1) {
-        var defaults = factory(this._source.extends[i]).defaults();
-
-        for (var property in defaults) {
-          var paths = defaults[property];
-
-          if (!(property in this._defaults)) {
-            this._defaults[property] = Object.create(null);
-          }
-
-          for (var path in paths) {
-            this._defaults[property][path] = paths[path];
-          }
+          dest[path] = paths[path];
         }
       }
     }
@@ -153,7 +144,7 @@ FactoryDefinition.prototype.compile = function FactoryDefinitionCompile() {
     scope[key] = identifier;
 
     for (var path in paths) {
-      tail = '  ' + identifier + '.' + path + ' = ' + paths[path] + ';\n' + tail;
+      tail = '  ' + identifier + '.' + path + ' = ' + JSON.stringify(paths[path]) + ';\n' + tail;
     }
   }
 
@@ -173,9 +164,38 @@ FactoryDefinition.prototype.compile = function FactoryDefinitionCompile() {
 
   head += '\n';
 
-  this.definition = new Function('component', head + tail)(component);
-
-  this._source = source;
+  this.definition = new Function('component', head + tail)(function (component) { console.log('get component', component); });
 
   this._sourceHasChanged = false;
 };
+
+function expandSourceProperty(self, property, scope, keys) {
+  if (property in self._source) {
+    scope[self.name] = self._source.defaults;
+    keys.push(self.name);
+  }
+
+  if (!('extends' in self._source)) {
+    return;
+  }
+
+  var stack = self._source.extends.slice();
+
+  while (stack.length > 0) {
+    var current = stack.shift(),
+      source = factory(current)._source;
+
+    if (current in scope) {
+      continue;
+    }
+
+    if ('extends' in source) {
+      stack.push.apply(stack, source.extends);
+    }
+
+    if (property in source) {
+      scope[current] = source[property];
+      keys.push(current);
+    }
+  }
+}

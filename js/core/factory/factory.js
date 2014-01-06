@@ -8,12 +8,12 @@ function factory(name) {
 
 factory._definitions = Object.create(null);
 
-factory.define = function factoryDefine(name, definitionOrSource) {
+factory.define = function factoryDefine(name, source) {
   if (name in factory._definitions) {
     throw new Error();
   }
 
-  var factoryDefinition = new FactoryDefinition(name, definitionOrSource);
+  var factoryDefinition = new FactoryDefinition(name, source);
 
   factory._definitions[name] = factoryDefinition;
 
