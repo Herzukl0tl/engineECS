@@ -50,6 +50,21 @@ FactoryDefinition.prototype.create = function FactoryDefinitionCreate(options) {
   return entity;
 };
 
+FactoryDefinition.prototype.destroy = function FactoryDefinitionDestroy(entity) {
+  var components = this.components();
+
+  for (var i = components.length - 1; i >= 0; i -= 1) {
+    component(components[i]).remove(entity);
+  }
+
+  for (var j = this._entities.length - 1; j >= 0; j -= 1) {
+    if (entity === this._entities[j]) {
+      this._entities.splice(j, 1);
+      break;
+    }
+  }
+};
+
 FactoryDefinition.prototype.source = function FactoryDefinitionSource(value) {
   if (arguments.length === 0) {
     return this._source;
@@ -175,7 +190,7 @@ FactoryDefinition.prototype.compile = function FactoryDefinitionCompile() {
 
   head += '\n';
 
-  this.definition = new Function('component', head + tail)(function (component) { console.log('get component', component); });
+  this.definition = new Function('component', head + tail)(component);
 
   this._sourceHasChanged = false;
 };
