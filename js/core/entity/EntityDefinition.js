@@ -1,6 +1,6 @@
 var nextEntityId = 1;
 
-function FactoryDefinition(name, source) {
+function EntityDefinition(name, source) {
   this.name = name;
   this.definition = null;
 
@@ -15,21 +15,21 @@ function FactoryDefinition(name, source) {
   this._entities = [];
 }
 
-FactoryDefinition.prototype.create = function FactoryDefinitionCreate(options) {
-  var entity = nextEntityId++;
+EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
+  var id = nextEntityId++;
 
   if (this._sourceHasChanged) {
     this.compile();
   }
 
-  this.definition(entity);
+  this.definition(id);
 
   for (var key in options) {
-    if (!(component(key).in(entity))) {
+    if (!(component(key).in(id))) {
       continue;
     }
 
-    var root = component(key).of(entity),
+    var root = component(key).of(id),
       paths = options[key];
 
     for (var path in paths) {
@@ -45,27 +45,27 @@ FactoryDefinition.prototype.create = function FactoryDefinitionCreate(options) {
     }
   }
 
-  this._entities.push(entity);
+  this._entities.push(id);
 
-  return entity;
+  return id;
 };
 
-FactoryDefinition.prototype.destroy = function FactoryDefinitionDestroy(entity) {
+EntityDefinition.prototype.destroy = function EntityDefinitionDestroy(id) {
   var components = this.components();
 
   for (var i = components.length - 1; i >= 0; i -= 1) {
-    component(components[i]).remove(entity);
+    component(components[i]).remove(id);
   }
 
   for (var j = this._entities.length - 1; j >= 0; j -= 1) {
-    if (entity === this._entities[j]) {
+    if (id === this._entities[j]) {
       this._entities.splice(j, 1);
       break;
     }
   }
 };
 
-FactoryDefinition.prototype.source = function FactoryDefinitionSource(value) {
+EntityDefinition.prototype.source = function EntityDefinitionSource(value) {
   if (arguments.length === 0) {
     return this._source;
   }
@@ -77,7 +77,7 @@ FactoryDefinition.prototype.source = function FactoryDefinitionSource(value) {
   this._defaultsHaveChanged = true;
 };
 
-FactoryDefinition.prototype.components = function FactoryDefinitionComponents() {
+EntityDefinition.prototype.components = function EntityDefinitionComponents() {
   if (this._componentsHaveChanged) {
     var scope = Object.create(null),
       keys = [],
@@ -116,7 +116,7 @@ FactoryDefinition.prototype.components = function FactoryDefinitionComponents() 
   return this._components;
 };
 
-FactoryDefinition.prototype.defaults = function FactoryDefinitionDefaults() {
+EntityDefinition.prototype.defaults = function EntityDefinitionDefaults() {
   if (this._defaultsHaveChanged) {
     var scope = Object.create(null),
       keys = [];
@@ -152,8 +152,8 @@ FactoryDefinition.prototype.defaults = function FactoryDefinitionDefaults() {
   return this._defaults;
 };
 
-FactoryDefinition.prototype.compile = function FactoryDefinitionCompile() {
-  var head = 'return function ' + this.name + 'Definition($entity) {\n', tail = '}',
+EntityDefinition.prototype.compile = function EntityDefinitionCompile() {
+  var head = 'return function ' + this.name + 'Definition($id) {\n', tail = '}',
 
     components = this.components(),
     defaults = this.defaults(),
@@ -185,7 +185,7 @@ FactoryDefinition.prototype.compile = function FactoryDefinitionCompile() {
       head += scope[components[i]] + ' = ';
     }
 
-    head += 'component("' + components[i] + '").add($entity);\n';
+    head += 'component("' + components[i] + '").add($id);\n';
   }
 
   head += '\n';
@@ -207,7 +207,7 @@ function expandSourceProperty(self, property, scope, keys) {
 
   while (stack.length > 0) {
     var current = stack.shift(),
-      source = factory(current)._source;
+      source = entity(current)._source;
 
     if (current in scope) {
       continue;

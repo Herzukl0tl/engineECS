@@ -2,11 +2,11 @@ function ComponentDefinition(name, definition) {
   this.name = name;
   this.definition = definition;
 
-  this._instances = Object.create(null);
+  this._components = Object.create(null);
 }
 
 ComponentDefinition.prototype.of = function ComponentDefinitionOf(entity, options) {
-  var component = this._instances[entity];
+  var component = this._components[entity];
 
   if (arguments.length === 2) {
     if (!this.in(entity)) {
@@ -19,7 +19,7 @@ ComponentDefinition.prototype.of = function ComponentDefinitionOf(entity, option
 };
 
 ComponentDefinition.prototype.in = function ComponentDefinitionIn(entity) {
-  return entity in this._instances;
+  return entity in this._components;
 };
 
 ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
@@ -27,7 +27,7 @@ ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
 
   var component = this.definition.apply(this, arguments);
 
-  this._instances[entity] = component;
+  this._components[entity] = component;
 
   return component;
 };
@@ -35,7 +35,7 @@ ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
 ComponentDefinition.prototype.remove = function ComponentDefinitionRemove(entity) {
   if (!this.in(entity)) return false;
 
-  delete this._instances[entity];
+  delete this._components[entity];
 
   return true;
 };
@@ -47,10 +47,10 @@ ComponentDefinition.prototype.share = function ComponentDefinitionShare(source, 
 
   if (Array.isArray(dest)) {
     for (var i = dest.length - 1; i >= 0; i -= 1) {
-      this._instances[dest[i]] = component;
+      this._components[dest[i]] = component;
     }
   } else {
-    this._instances[dest] = component;
+    this._components[dest] = component;
   }
 
   return component;
