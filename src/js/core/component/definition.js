@@ -1,3 +1,5 @@
+'use strict';
+
 function ComponentDefinition(name, definition) {
   this.name = name;
   this.definition = definition;

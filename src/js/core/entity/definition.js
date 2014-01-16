@@ -1,4 +1,9 @@
-var nextEntityId = 1;
+'use strict';
+
+var component = require('../component'),
+  entity = require('../entity'),
+
+  nextEntityId = 1;
 
 
 function EntityDefinition(name, source) {
@@ -112,7 +117,8 @@ EntityDefinition.prototype.components = function EntityDefinitionComponents() {
         continue;
       }
 
-      outer: for (var j = components.length - 1; j >= 0; j -= 1) {
+      outer:
+      for (var j = components.length - 1; j >= 0; j -= 1) {
         var item = components[j];
 
         for (var k = this._components.length - 1; k >= 0; k -= 1) {

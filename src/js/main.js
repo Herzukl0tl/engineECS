@@ -1,6 +1,8 @@
-component = require('./core/component');
-system = require('./core/system');
-entity = require('./core/entity');
+'use strict';
 
-Pool = require('./pool').Pool;
-FixedPool = require('./pool').FixedPool;
+window.component = require('./core/component');
+window.system = require('./core/system');
+window.entity = require('./core/entity');
+
+window.Pool = require('./pool').Pool;
+window.FixedPool = require('./pool').FixedPool;

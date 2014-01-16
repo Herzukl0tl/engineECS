@@ -1,3 +1,5 @@
+'use strict';
+
 function Pool(factory, options) {
   this._factory = factory;
 

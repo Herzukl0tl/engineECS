@@ -1,3 +1,5 @@
+'use strict';
+
 function FixedPool(factory, options) {
   this._pool = [];
 

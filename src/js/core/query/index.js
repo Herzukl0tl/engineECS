@@ -6,6 +6,8 @@
 //   query('components', ...)
 //   query('factories', ...)
 
+'use strict';
+
 var rSpaces = /\s+/g,
   rTokens = /[^&|!()]+|[&|!()]/g;
 
@@ -70,7 +72,7 @@ query.compile = function queryCompile(input) {
 
     expression = key.match(rTokens);
 
-    for (var i = 0; fragment = expression[i]; i += 1) {
+    for (var i = 0; (fragment = expression[i]); i += 1) {
       switch (fragment) {
       case tokens.and:
         expression[i] = '&&';

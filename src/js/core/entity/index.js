@@ -1,4 +1,6 @@
-var entityDefinition = require('./definition');
+'use strict';
+
+var EntityDefinition = require('./definition');
 
 
 function entity(name) {
@@ -17,7 +19,7 @@ entity.define = function entityDefine(name, source) {
     throw new Error();
   }
 
-  var entityDefinition = new FactoryDefinition(name, source);
+  var entityDefinition = new EntityDefinition(name, source);
 
   entity._definitions[name] = entityDefinition;
 

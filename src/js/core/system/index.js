@@ -1,3 +1,5 @@
+'use strict';
+
 var SystemDefinition = require('./definition');
 
 
@@ -31,26 +33,26 @@ system.define = function systemDefine(name, definition, components, context) {
   return systemDefinition;
 };
 
-system.order = function systemOrder(newList){
-    if(Array.isArray(newList)) system._list = newList;
+system.order = function systemOrder(newList) {
+  if(Array.isArray(newList)) system._list = newList;
 
-    system._listLength = system._list.length;
+  system._listLength = system._list.length;
 
-    return system._list;
+  return system._list;
 };
 
 system.run = function systemRun(){
-    for (var x = 0; x < system._listLength; x++){
-        system._list[x].run();
-    }
+  for (var x = 0; x < system._listLength; x++){
+    system._list[x].run();
+  }
 };
 
 system.refresh = function systemRefresh(entity){
-    for (var x = 0; x < system._listLength; x++){
-        var componentPack = entity.components();
-        if(system._list[i].check(componentPack)) system._list[i].add(entity, componentPack);
-        else system._list[i].remove(entity);
-    }
+  for (var x = 0; x < system._listLength; x++){
+    var componentPack = entity.components();
+    if (system._list[x].check(componentPack)) system._list[x].add(entity, componentPack);
+    else system._list[x].remove(entity);
+  }
 };
 
 

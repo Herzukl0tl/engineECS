@@ -1,3 +1,5 @@
+'use strict';
+
 var Pool = require('./Pool'),
   FixedPool = require('./FixedPool');
 
