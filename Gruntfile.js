@@ -48,6 +48,9 @@ module.exports = function (grunt) {
         src: 'src/dart/**/*.dart',
         dest: 'dist/<%= pkg.name %>.dart.js',
       },
+      options : {
+        dart2js_bin : "./lib/dart-sdk/bin/dart2js",
+      }
     },
     watch: {
       js: {
