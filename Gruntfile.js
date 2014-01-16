@@ -1,9 +1,13 @@
 module.exports = function (grunt) {
+  'use strict';
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     jshint: {
       all: ['gruntfile.js', 'src/js/**/*.js'],
-      jshintrc: true
+      options: {
+        jshintrc: '.jshintrc'
+      }
     },
     browserify: {
       all: {

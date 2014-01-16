@@ -1,3 +1,18 @@
 {
-  evil: true
+  "camelcase": true,
+  "eqeqeq": true,
+  "evil": true,
+  "indent": 2,
+  "latedef": "nofunc",
+  "nonew": true,
+  "quotmark": "single",
+  "unused": true,
+  "trailing": true,
+
+  "eqnull": true,
+  "evil": true,
+  "globalstrict": true,
+
+  "node": true,
+  "browser": true
 }
