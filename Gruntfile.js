@@ -3,8 +3,23 @@ module.exports = function (grunt) {
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    jsbeautifier: {
+      modify: {
+        src: ['Gruntfile.js', 'src/js/**/*.js'],
+        options: {
+          config: '.jsbeautifyrc'
+        }
+      },
+      verify: {
+        src: ['Gruntfile.js', 'src/js/**/*.js'],
+        options: {
+          mode: 'VERIFY_ONLY',
+          config: '.jsbeautifyrc'
+        }
+      }
+    },
     jshint: {
-      all: ['gruntfile.js', 'src/js/**/*.js'],
+      all: ['Gruntfile.js', 'src/js/**/*.js'],
       options: {
         jshintrc: '.jshintrc'
       }
@@ -12,7 +27,7 @@ module.exports = function (grunt) {
     browserify: {
       all: {
         src: 'src/js/**/*.js',
-        dest:'dist/<%= pkg.name %>.js'
+        dest: 'dist/<%= pkg.name %>.js'
       }
     },
     uglify: {
@@ -31,17 +46,17 @@ module.exports = function (grunt) {
     dart2js: {
       all: {
         src: 'src/dart/**/*.dart',
-        dest:'dist/<%= pkg.name %>.dart.js',
+        dest: 'dist/<%= pkg.name %>.dart.js',
       },
     },
     watch: {
       js: {
-        files: ['gruntfile.js', 'src/js/**/*.js'],
-        tasks: ['jshint', 'build:js']
+        files: ['Gruntfile.js', 'src/js/**/*.js'],
+        tasks: ['lint', 'build:js']
       },
       lint: {
-        files: ['gruntfile.js', 'src/js/**/*.js'],
-        tasks: ['jshint']
+        files: ['Gruntfile.js', 'src/js/**/*.js'],
+        tasks: ['lint']
       },
       build: {
         files: ['src/js/**/*.js', 'src/dart/**/*.js'],
@@ -51,6 +66,7 @@ module.exports = function (grunt) {
   });
 
   [
+    'grunt-jsbeautifier',
     'grunt-contrib-jshint',
     'grunt-browserify',
     'grunt-contrib-uglify',
@@ -58,10 +74,14 @@ module.exports = function (grunt) {
     'grunt-contrib-watch'
   ].forEach(grunt.loadNpmTasks);
 
-  grunt.registerTask('build:js', ['browserify', 'uglify:js']);
+  grunt.registerTask('beautify', ['jsbeautifier:modify']);
+
+  grunt.registerTask('lint', ['jsbeautifier:verify', 'jshint']);
+
+  grunt.registerTask('build:js', ['beautify', 'browserify', 'uglify:js']);
   grunt.registerTask('build:dart', ['dart2js', 'uglify:dart']);
 
   grunt.registerTask('build', ['build:js', 'build:dart']);
 
-  grunt.registerTask('default', ['jshint', 'build']);
+  grunt.registerTask('default', ['lint', 'build']);
 };

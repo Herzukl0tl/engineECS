@@ -34,21 +34,21 @@ system.define = function systemDefine(name, definition, components, context) {
 };
 
 system.order = function systemOrder(newList) {
-  if(Array.isArray(newList)) system._list = newList;
+  if (Array.isArray(newList)) system._list = newList;
 
   system._listLength = system._list.length;
 
   return system._list;
 };
 
-system.run = function systemRun(){
-  for (var x = 0; x < system._listLength; x++){
+system.run = function systemRun() {
+  for (var x = 0; x < system._listLength; x++) {
     system._list[x].run();
   }
 };
 
-system.refresh = function systemRefresh(entity){
-  for (var x = 0; x < system._listLength; x++){
+system.refresh = function systemRefresh(entity) {
+  for (var x = 0; x < system._listLength; x++) {
     var componentPack = entity.components();
     if (system._list[x].check(componentPack)) system._list[x].add(entity, componentPack);
     else system._list[x].remove(entity);

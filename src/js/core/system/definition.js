@@ -14,9 +14,9 @@ function SystemDefinition(name, definition, components, context) {
 }
 
 
-SystemDefinition.prototype.add = function SystemDefinitionAdd(entity, componentPack){
-  if (typeof componentPack !== 'object'){
-  //then compute componentPack with entity
+SystemDefinition.prototype.add = function SystemDefinitionAdd(entity, componentPack) {
+  if (typeof componentPack !== 'object') {
+    //then compute componentPack with entity
   }
 
   this.componentPacks.push(componentPack);
@@ -25,7 +25,7 @@ SystemDefinition.prototype.add = function SystemDefinitionAdd(entity, componentP
   return componentPack;
 };
 
-SystemDefinition.prototype.remove = function SystemDefinitionRemove(entity){
+SystemDefinition.prototype.remove = function SystemDefinitionRemove(entity) {
   var index = this.entities.indexOf(entity);
 
   if (index < 0) return false;
@@ -36,9 +36,9 @@ SystemDefinition.prototype.remove = function SystemDefinitionRemove(entity){
   return true;
 };
 
-SystemDefinition.prototype.check = function SystemDefinitionCheck(componentPack){
-  if (typeof componentPack !== 'object'){
-  //then its an entity, have to compute its componentPack
+SystemDefinition.prototype.check = function SystemDefinitionCheck(componentPack) {
+  if (typeof componentPack !== 'object') {
+    //then its an entity, have to compute its componentPack
   }
 
   for (var i = this.components.length - 1; i > 0; i--) {
@@ -63,7 +63,7 @@ var run = function SystemDefinitionRunEntity(entity, componentPack) {
 };
 
 SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentPack) {
-  if (arguments.length === 2){
+  if (arguments.length === 2) {
     run.call(this, entity, componentPack);
   } else {
     var length = this.entities.length;

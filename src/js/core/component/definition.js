@@ -12,7 +12,7 @@ ComponentDefinition.prototype.of = function ComponentDefinitionOf(entity, option
   var component = this._components[entity];
 
   if (arguments.length === 2) {
-    if (!this.in(entity)) {
+    if (!this. in (entity)) {
       if (options.required) throw new Error();
       else if (options.add) component = this.add(entity);
     }
@@ -21,12 +21,12 @@ ComponentDefinition.prototype.of = function ComponentDefinitionOf(entity, option
   return component;
 };
 
-ComponentDefinition.prototype.in = function ComponentDefinitionIn(entity) {
+ComponentDefinition.prototype. in = function ComponentDefinitionIn(entity) {
   return entity in this._components;
 };
 
 ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
-  if (this.in(entity)) throw new Error();
+  if (this. in (entity)) throw new Error();
 
   var component = this.definition.apply(this, arguments);
 
@@ -36,7 +36,7 @@ ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
 };
 
 ComponentDefinition.prototype.remove = function ComponentDefinitionRemove(entity) {
-  if (!this.in(entity)) return false;
+  if (!this. in (entity)) return false;
 
   delete this._components[entity];
 
@@ -44,7 +44,7 @@ ComponentDefinition.prototype.remove = function ComponentDefinitionRemove(entity
 };
 
 ComponentDefinition.prototype.share = function ComponentDefinitionShare(source, dest) {
-  if (!this.in(source)) return null;
+  if (!this. in (source)) return null;
 
   var component = this.of(source);
 

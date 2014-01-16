@@ -32,7 +32,7 @@ EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
   this.definition(id);
 
   for (var key in options) {
-    if (!(component(key).in(id))) {
+    if (!(component(key). in (id))) {
       continue;
     }
 
@@ -117,8 +117,7 @@ EntityDefinition.prototype.components = function EntityDefinitionComponents() {
         continue;
       }
 
-      outer:
-      for (var j = components.length - 1; j >= 0; j -= 1) {
+      outer: for (var j = components.length - 1; j >= 0; j -= 1) {
         var item = components[j];
 
         for (var k = this._components.length - 1; k >= 0; k -= 1) {
@@ -174,7 +173,8 @@ EntityDefinition.prototype.defaults = function EntityDefinitionDefaults() {
 };
 
 EntityDefinition.prototype.compile = function EntityDefinitionCompile() {
-  var head = 'return function ' + this.name + 'Definition($id) {\n', tail = '}',
+  var head = 'return function ' + this.name + 'Definition($id) {\n',
+    tail = '}',
 
     components = this.components(),
     defaults = this.defaults(),
@@ -199,7 +199,7 @@ EntityDefinition.prototype.compile = function EntityDefinitionCompile() {
 
   head += '\n';
 
-  for (var i = components.length - 1; i >= 0; i-= 1) {
+  for (var i = components.length - 1; i >= 0; i -= 1) {
     head += '  ';
 
     if (components[i] in scope) {
