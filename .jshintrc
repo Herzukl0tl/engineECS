@@ -6,6 +6,7 @@
   "latedef": "nofunc",
   "nonew": true,
   "quotmark": "single",
+  "undef": true,
   "unused": true,
   "trailing": true,
 
