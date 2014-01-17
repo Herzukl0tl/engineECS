@@ -2,7 +2,7 @@
   "name": "ecs",
   "version": "0.0.0",
   "description": "A game engine from the future",
-  "main": "js/main.js",
+  "main": "dist/js/ecs.min.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,7 +13,9 @@
   "keywords": [
     "game",
     "engine",
-    "entity-components-systems",
+    "entities",
+    "components",
+    "systems",
     "ecs"
   ],
   "author": "herzukl0tl",
