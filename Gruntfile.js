@@ -65,15 +65,7 @@ module.exports = function (grunt) {
     }
   });
 
-  [
-    'grunt-jsbeautifier',
-    'grunt-contrib-jshint',
-    'grunt-contrib-clean',
-    'grunt-browserify',
-    'grunt-contrib-uglify',
-    'grunt-dart2js',
-    'grunt-contrib-watch'
-  ].forEach(grunt.loadNpmTasks);
+  require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
 
   grunt.registerTask('beautify', ['jsbeautifier:modify']);
   grunt.registerTask('lint', ['jsbeautifier:verify', 'jshint']);
