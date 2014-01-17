@@ -1,4 +1,6 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict';
+
 function ComponentDefinition(name, definition) {
   this.name = name;
   this.definition = definition;
@@ -11,7 +13,7 @@ ComponentDefinition.prototype.of = function ComponentDefinitionOf(entity, option
   var component = this._components[entity];
 
   if (arguments.length === 2) {
-    if (!this.in(entity)) {
+    if (!this. in (entity)) {
       if (options.required) throw new Error();
       else if (options.add) component = this.add(entity);
     }
@@ -20,12 +22,12 @@ ComponentDefinition.prototype.of = function ComponentDefinitionOf(entity, option
   return component;
 };
 
-ComponentDefinition.prototype.in = function ComponentDefinitionIn(entity) {
+ComponentDefinition.prototype. in = function ComponentDefinitionIn(entity) {
   return entity in this._components;
 };
 
 ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
-  if (this.in(entity)) throw new Error();
+  if (this. in (entity)) throw new Error();
 
   var component = this.definition.apply(this, arguments);
 
@@ -35,7 +37,7 @@ ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
 };
 
 ComponentDefinition.prototype.remove = function ComponentDefinitionRemove(entity) {
-  if (!this.in(entity)) return false;
+  if (!this. in (entity)) return false;
 
   delete this._components[entity];
 
@@ -43,7 +45,7 @@ ComponentDefinition.prototype.remove = function ComponentDefinitionRemove(entity
 };
 
 ComponentDefinition.prototype.share = function ComponentDefinitionShare(source, dest) {
-  if (!this.in(source)) return null;
+  if (!this. in (source)) return null;
 
   var component = this.of(source);
 
@@ -62,6 +64,8 @@ ComponentDefinition.prototype.share = function ComponentDefinitionShare(source, 
 module.exports = ComponentDefinition;
 
 },{}],2:[function(require,module,exports){
+'use strict';
+
 var ComponentDefinition = require('./definition');
 
 
@@ -77,7 +81,7 @@ function component(name) {
 component._definitions = Object.create(null);
 
 component.define = function componentDefine(name, definition) {
-  if (name in factory._definitions) {
+  if (name in component._definitions) {
     throw new Error();
   }
 
@@ -92,7 +96,12 @@ component.define = function componentDefine(name, definition) {
 module.exports = component;
 
 },{"./definition":1}],3:[function(require,module,exports){
-var nextEntityId = 1;
+'use strict';
+
+var component = require('../component'),
+  entity = require('../entity'),
+
+  nextEntityId = 1;
 
 
 function EntityDefinition(name, source) {
@@ -121,7 +130,7 @@ EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
   this.definition(id);
 
   for (var key in options) {
-    if (!(component(key).in(id))) {
+    if (!(component(key). in (id))) {
       continue;
     }
 
@@ -262,7 +271,8 @@ EntityDefinition.prototype.defaults = function EntityDefinitionDefaults() {
 };
 
 EntityDefinition.prototype.compile = function EntityDefinitionCompile() {
-  var head = 'return function ' + this.name + 'Definition($id) {\n', tail = '}',
+  var head = 'return function ' + this.name + 'Definition($id) {\n',
+    tail = '}',
 
     components = this.components(),
     defaults = this.defaults(),
@@ -287,7 +297,7 @@ EntityDefinition.prototype.compile = function EntityDefinitionCompile() {
 
   head += '\n';
 
-  for (var i = components.length - 1; i >= 0; i-= 1) {
+  for (var i = components.length - 1; i >= 0; i -= 1) {
     head += '  ';
 
     if (components[i] in scope) {
@@ -334,8 +344,10 @@ function expandSourceProperty(self, property, scope, keys) {
 
 module.exports = EntityDefinition;
 
-},{}],4:[function(require,module,exports){
-var entityDefinition = require('./definition');
+},{"../component":2,"../entity":4}],4:[function(require,module,exports){
+'use strict';
+
+var EntityDefinition = require('./definition');
 
 
 function entity(name) {
@@ -354,7 +366,7 @@ entity.define = function entityDefine(name, source) {
     throw new Error();
   }
 
-  var entityDefinition = new FactoryDefinition(name, source);
+  var entityDefinition = new EntityDefinition(name, source);
 
   entity._definitions[name] = entityDefinition;
 
@@ -372,6 +384,8 @@ module.exports = entity;
 // define standard queries
 //   query('components', ...)
 //   query('factories', ...)
+
+'use strict';
 
 var rSpaces = /\s+/g,
   rTokens = /[^&|!()]+|[&|!()]/g;
@@ -437,7 +451,8 @@ query.compile = function queryCompile(input) {
 
     expression = key.match(rTokens);
 
-    for (var i = 0; fragment = expression[i]; i += 1) {
+    for (var i = 0;
+      (fragment = expression[i]); i += 1) {
       switch (fragment) {
       case tokens.and:
         expression[i] = '&&';
@@ -480,83 +495,87 @@ query.compile = function queryCompile(input) {
 module.exports = query;
 
 },{}],6:[function(require,module,exports){
+'use strict';
+
 var ARRAY = [];
 
 
 function SystemDefinition(name, definition, components, context) {
-    this.name = name;
-    this.definition = definition;
-    this.components = components;
-    this.context = context || this;
+  this.name = name;
+  this.definition = definition;
+  this.components = components;
+  this.context = context || this;
 
-    this.entities = [];
-    this.componentPacks = [];
+  this.entities = [];
+  this.componentPacks = [];
 }
 
 
-SystemDefinition.prototype.add = function SystemDefinitionAdd(entity, componentPack){
-    if(typeof componentPack !== "object"){
-        //then compute componentPack with entity
+SystemDefinition.prototype.add = function SystemDefinitionAdd(entity, componentPack) {
+  if (typeof componentPack !== 'object') {
+    //then compute componentPack with entity
+  }
+
+  this.componentPacks.push(componentPack);
+  this.entity.push(entity);
+
+  return componentPack;
+};
+
+SystemDefinition.prototype.remove = function SystemDefinitionRemove(entity) {
+  var index = this.entities.indexOf(entity);
+
+  if (index < 0) return false;
+
+  this.entities.splice(index, 1);
+  this.componentPack.splice(index, 1);
+
+  return true;
+};
+
+SystemDefinition.prototype.check = function SystemDefinitionCheck(componentPack) {
+  if (typeof componentPack !== 'object') {
+    //then its an entity, have to compute its componentPack
+  }
+
+  for (var i = this.components.length - 1; i > 0; i--) {
+    if (componentPack[this.components[i]] === undefined) return false;
+  }
+
+  return true;
+};
+
+var run = function SystemDefinitionRunEntity(entity, componentPack) {
+  var components = ARRAY;
+
+  for (var i = this.components.length - 1; i > 0; i--) {
+    components.push(componentPack[this.components[i]]);
+  }
+
+  components.push(entity);
+
+  this.definition.apply(this.context, components);
+
+  ARRAY.length = 0;
+};
+
+SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentPack) {
+  if (arguments.length === 2) {
+    run.call(this, entity, componentPack);
+  } else {
+    var length = this.entities.length;
+    for (var i = 0; i < length; i++) {
+      run.call(this, this.entities[i], this.componentPacks[i]);
     }
-
-    this.componentPacks.push(componentPack);
-    this.entity.push(entity);
-
-    return componentPack;
-}
-
-SystemDefinition.prototype.remove = function SystemDefinitionRemove(entity){
-    var index = this.entities.indexOf(entity);
-
-    if(index < 0) return false;
-
-    this.entities.splice(index, 1);
-    this.componentPack.splice(index, 1);
-
-    return true;
-}
-
-SystemDefinition.prototype.check = function SystemDefinitionCheck(componentPack){
-    if(typeof componentPack !== "object"){
-        //then its an entity, have to compute its componentPack
-    }
-
-    for(var i = this.components.length - 1; i > 0; i--){
-        if(componentPack[this.components[i]] === undefined) return false;
-    }
-
-    return true;
-}
-
-var run = function SystemDefinitionRunEntity(entity, componentPack){
-    var components = ARRAY;
-
-    for(var i = this.components.length - 1; i > 0; i--){
-        components.push(componentPack[this.components[i]]);
-    }
-
-    components.push(entity);
-
-    this.definition.apply(this.context, components);
-
-    ARRAY.length = 0;
-}
-
-SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentPack){
-    if(arguments.length === 2){
-        run.call(this, entity, componentPack)
-    } else {
-        var length = this.entities.length;
-        for(var i = 0; i < length; i++){
-            run.call(this, this.entities[i], this.componentPacks[i]);
-        }
-    }
-}
+  }
+};
 
 
 module.exports = SystemDefinition;
 
 },{}],7:[function(require,module,exports){
+'use strict';
+
 var SystemDefinition = require('./definition');
 
 
@@ -590,40 +609,44 @@ system.define = function systemDefine(name, definition, components, context) {
   return systemDefinition;
 };
 
-system.order = function systemOrder(newList){
-    if(Array.isArray(newList)) system._list = newList;
+system.order = function systemOrder(newList) {
+  if (Array.isArray(newList)) system._list = newList;
 
-    system._listLength = system._list.length;
+  system._listLength = system._list.length;
 
-    return system._list;
+  return system._list;
 };
 
-system.run = function systemRun(){
-    for (var x = 0; x < system._listLength; x++){
-        system._list[x].run();
-    }
+system.run = function systemRun() {
+  for (var x = 0; x < system._listLength; x++) {
+    system._list[x].run();
+  }
 };
 
-system.refresh = function systemRefresh(entity){
-    for (var x = 0; x < system._listLength; x++){
-        var componentPack = entity.components();
-        if(system._list[i].check(componentPack)) system._list[i].add(entity, componentPack);
-        else system._list[i].remove(entity);
-    }
+system.refresh = function systemRefresh(entity) {
+  for (var x = 0; x < system._listLength; x++) {
+    var componentPack = entity.components();
+    if (system._list[x].check(componentPack)) system._list[x].add(entity, componentPack);
+    else system._list[x].remove(entity);
+  }
 };
 
 
 module.exports = system;
 
 },{"./definition":6}],8:[function(require,module,exports){
-component = require('./core/component');
-system = require('./core/system');
-entity = require('./core/entity');
+'use strict';
 
-Pool = require('./pool').Pool;
-FixedPool = require('./pool').FixedPool;
+window.component = require('./core/component');
+window.system = require('./core/system');
+window.entity = require('./core/entity');
+
+window.Pool = require('./pool').Pool;
+window.FixedPool = require('./pool').FixedPool;
 
 },{"./core/component":2,"./core/entity":4,"./core/system":7,"./pool":11}],9:[function(require,module,exports){
+'use strict';
+
 function FixedPool(factory, options) {
   this._pool = [];
 
@@ -693,6 +716,8 @@ FixedPool.defaults = {
 module.exports = FixedPool;
 
 },{}],10:[function(require,module,exports){
+'use strict';
+
 function Pool(factory, options) {
   this._factory = factory;
 
@@ -775,8 +800,11 @@ Pool.defaults = {
 module.exports = Pool;
 
 },{}],11:[function(require,module,exports){
+'use strict';
+
 var Pool = require('./Pool'),
   FixedPool = require('./FixedPool');
+
 
 exports.Pool = Pool;
 exports.FixedPool = FixedPool;

@@ -1,8 +1,6 @@
 {
-  "camelcase": true,
   "eqeqeq": true,
   "evil": true,
-  "indent": 2,
   "latedef": "nofunc",
   "nonew": true,
   "quotmark": "single",
