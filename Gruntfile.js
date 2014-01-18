@@ -66,7 +66,7 @@ module.exports = function (grunt) {
     },
     shell: {
       githooks: {
-        command: 'ln -s ../../hooks/pre-commit .git/hooks/pre-commit'
+        command: 'ln -s ../../githooks/pre-commit .git/hooks/pre-commit'
       }
     }
   });

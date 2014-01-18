@@ -69,7 +69,7 @@ gulp.task('githooks', function () {
     .pipe(tasks.clean())
     .on('end', function () {
       gulp.src('./')
-        .pipe(tasks.exec('ln -s ../../hooks/pre-commit .git/hooks/pre-commit'));
+        .pipe(tasks.exec('ln -s ../../githooks/pre-commit .git/hooks/pre-commit'));
     });
 });
 
