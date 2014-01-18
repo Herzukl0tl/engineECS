@@ -2,7 +2,7 @@
 
 module.exports = function (grunt) {
   grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
+    pkg: require('./package.json'),
     jsbeautifier: {
       modify: {
         src: ['Gruntfile.js', 'src/js/**/*.js'],
@@ -69,8 +69,8 @@ module.exports = function (grunt) {
 
   grunt.registerTask('beautify', ['newer:jsbeautifier:modify']);
   grunt.registerTask('lint', ['newer:jsbeautifier:verify', 'newer:jshint']);
-  grunt.registerTask('build:js', ['newer:jshint', 'beautify', 'newer:browserify', 'newer:uglify']);
-  grunt.registerTask('build:dart', ['newer:dart2js']);
+  grunt.registerTask('build:js', ['newer:jshint', 'beautify', 'clean:js', 'browserify', 'uglify']);
+  grunt.registerTask('build:dart', ['clean:dart', 'dart2js']);
   grunt.registerTask('build', ['build:js', 'build:dart']);
 
   grunt.registerTask('default', function () {
