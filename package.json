@@ -4,7 +4,8 @@
   "description": "A game engine from the future",
   "main": "dist/js/ecs.min.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postintall": "ln -s -f ../../hooks/pre-commit .git/hooks/pre-commit"
   },
   "repository": {
     "type": "git",
