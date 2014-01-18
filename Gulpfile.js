@@ -1,37 +1,34 @@
 'use strict';
 
 var gulp = require('gulp'),
-  jshint = require('gulp-jshint'),
-  browserify = require('gulp-browserify'),
-  uglify = require('gulp-uglify'),
-  clean = require('gulp-clean'),
-  dart2js = require('gulp-dart2js'),
-  rename = require('gulp-rename'),
+  tasks = require('load-gulp-tasks')(),
   pkg = require('./package.json');
+
+// todo
+gulp.task('beautify', function () {});
 
 gulp.task('lint:js', function () {
   return gulp.src(['./Gulpfile.js', './src/js/**/*.js'])
-    .pipe(jshint('.jshintrc'))
-    .pipe(jshint.reporter('jshint-stylish'));
+    .pipe(tasks.jshint('.jshintrc'))
+    .pipe(tasks.jshint.reporter('jshint-stylish'));
 });
 
-gulp.task('clean:js', function () {
+gulp.task('build:js', ['lint:js'], function () {
   return gulp.src('./dist/js/*', {read: false})
-    .pipe(clean());
-});
-
-gulp.task('build:js', ['lint:js', 'clean:js'], function () {
-  return gulp.src('./src/js/*.js')
-    .pipe(browserify())
-    .pipe(rename(pkg.name + '.js'))
-    .pipe(gulp.dest('./dist/js'))
-    .pipe(uglify())
-    .pipe(rename(pkg.name + '.min.js'))
-    .pipe(gulp.dest('dist/js'));
+    .pipe(clean())
+    .on('end', function () {
+      gulp.src('./src/js/*.js')
+        .pipe(tasks.browserify())
+        .pipe(rename(pkg.name + '.js'))
+        .pipe(gulp.dest('./dist/js'))
+        .pipe(tasks.uglify())
+        .pipe(rename(pkg.name + '.min.js'))
+        .pipe(gulp.dest('dist/js'));
+    });
 });
 
 gulp.task('watch:js', function () {
-  gulp.watch(['./Gulpfile.js', './src/js/**/*.js'], function () {
+  return gulp.watch(['./Gulpfile.js', './src/js/**/*.js'], function () {
     gulp.run('build:js');
   });
 });
@@ -40,18 +37,21 @@ gulp.task('default:js', ['build:js'], function () {
   gulp.run('watch:js');
 });
 
-gulp.task('clean:dart', function () {
-  return gulp.src('./dist/dart/*', {read: false})
-    .pipe(clean());
-});
+// todo
+gulp.task('lint:dart', function () {});
 
-gulp.task('build:dart', ['clean:dart'], function () {
-  return gulp.src('./src/dart/*.dart')
-    .pipe(dart2js('./dist/dart/'));
+gulp.task('build:dart', ['lint:dart'], function () {
+  return gulp.src('./dist/dart/*', {read: false})
+    .pipe(tasks.clean())
+    .on('end', function () {
+      // ./lib/dart-sdk/bin must be in PATH
+      gulp.src('./src/dart/*.dart')
+        .pipe(tasks.dart2js('./dist/dart/'));
+    });
 });
 
 gulp.task('watch:dart', function () {
-  gulp.watch('./src/dart/**/*.dart', function () {
+  return gulp.watch('./src/dart/**/*.dart', function () {
     gulp.run('build:dart');
   });
 });
@@ -60,12 +60,35 @@ gulp.task('default:dart', ['build:dart'], function () {
   gulp.run('watch:dart');
 });
 
-['build', 'watch'].forEach(function (name) {
+['build', 'watch', 'lint'].forEach(function (name) {
   gulp.task(name, [name + ':js', name + ':dart']);
+});
+
+gulp.task('githooks', function () {
+  return gulp.src('./.git/hooks/pre-commit', {read: false})
+    .pipe(tasks.clean())
+    .on('end', function () {
+      gulp.src('./')
+        .pipe(tasks.exec('ln -s ../../hooks/pre-commit .git/hooks/pre-commit'));
+    });
+});
+
+// todo: port the complete grunt-bump task to gulp
+gulp.task('bump', function () {
+  var options = {type: 'patch'};
+
+  if ('major' in gulp.env) options.type = 'major';
+  else if ('minor' in gulp.env) options.type = 'minor';
+
+  return gulp.src('./package.json')
+    .pipe(tasks.bump(options))
+    .pipe(gulp.dest('./package.json'));
 });
 
 gulp.task('default', function () {
   if ('js' in gulp.env) gulp.run('default:js');
   else if ('dart' in gulp.env) gulp.run('default:dart');
   else gulp.run('default:js', 'default:dart');
+
+  gulp.run('githooks');
 });

@@ -27,7 +27,8 @@ module.exports = function (grunt) {
     },
     clean: {
       js: 'dist/js/*',
-      dart: 'dist/dart/*'
+      dart: 'dist/dart/*',
+      githooks: '.git/hooks/pre-commit'
     },
     browserify: {
       all: {
@@ -62,20 +63,36 @@ module.exports = function (grunt) {
         files: ['src/dart/**/*.dart'],
         tasks: ['build:dart']
       }
+    },
+    shell: {
+      githooks: {
+        command: 'ln -s ../../hooks/pre-commit .git/hooks/pre-commit'
+      }
     }
   });
 
-  require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
+  require('load-grunt-tasks')(grunt);
 
   grunt.registerTask('beautify', ['newer:jsbeautifier:modify']);
-  grunt.registerTask('lint', ['newer:jsbeautifier:verify', 'newer:jshint']);
+
+  grunt.registerTask('lint:js', ['newer:jsbeautifier:verify', 'newer:jshint']);
+  // todo
+  grunt.registerTask('lint:dart', []);
+
   grunt.registerTask('build:js', ['newer:jshint', 'beautify', 'clean:js', 'browserify', 'uglify']);
   grunt.registerTask('build:dart', ['clean:dart', 'dart2js']);
-  grunt.registerTask('build', ['build:js', 'build:dart']);
+
+  ['build', 'lint'].forEach(function (name) {
+    grunt.registerTask(name, [name + ':js', name + ':dart']);
+  });
+
+  grunt.registerTask('githooks', ['clean:githooks', 'shell:githooks']);
 
   grunt.registerTask('default', function () {
     if (grunt.option('js')) grunt.task.run('build:js', 'watch:js');
     else if (grunt.option('dart')) grunt.task.run('build:dart', 'watch:dart');
     else grunt.task.run('build', 'watch');
+
+    grunt.task.run('githooks');
   });
 };
