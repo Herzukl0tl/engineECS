@@ -67,10 +67,10 @@ module.exports = function (grunt) {
 
   require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
 
-  grunt.registerTask('beautify', ['jsbeautifier:modify']);
-  grunt.registerTask('lint', ['jsbeautifier:verify', 'jshint']);
-  grunt.registerTask('build:js', ['jshint', 'beautify', 'clean:js', 'browserify', 'uglify']);
-  grunt.registerTask('build:dart', ['clean:dart', 'dart2js']);
+  grunt.registerTask('beautify', ['newer:jsbeautifier:modify']);
+  grunt.registerTask('lint', ['newer:jsbeautifier:verify', 'newer:jshint']);
+  grunt.registerTask('build:js', ['newer:jshint', 'beautify', 'newer:browserify', 'newer:uglify']);
+  grunt.registerTask('build:dart', ['newer:dart2js']);
   grunt.registerTask('build', ['build:js', 'build:dart']);
 
   grunt.registerTask('default', function () {
