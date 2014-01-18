@@ -89,8 +89,6 @@ module.exports = function (grunt) {
   grunt.registerTask('githooks', ['clean:githooks', 'shell:githooks']);
 
   grunt.registerTask('default', function () {
-    grunt.task.run('githooks');
-
     if (grunt.option('js')) grunt.task.run('build:js', 'watch:js');
     else if (grunt.option('dart')) grunt.task.run('build:dart', 'watch:dart');
     else grunt.task.run('build', 'watch');
