@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+# Pre-commit hooks
+
+# Lint files with jsbeautifier and jshint before committing
+grunt lint
