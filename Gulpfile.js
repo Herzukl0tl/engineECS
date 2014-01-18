@@ -14,7 +14,7 @@ gulp.task('lint:js', function () {
 });
 
 gulp.task('build:js', ['lint:js'], function () {
-  return gulp.src('./dist/js/*', {read: false})
+  return gulp.src(['./dist/js/*', '!./dist/dart/.gitignore'], {read: false})
     .pipe(clean())
     .on('end', function () {
       gulp.src('./src/js/*.js')
@@ -41,7 +41,7 @@ gulp.task('default:js', ['build:js'], function () {
 gulp.task('lint:dart', function () {});
 
 gulp.task('build:dart', ['lint:dart'], function () {
-  return gulp.src('./dist/dart/*', {read: false})
+  return gulp.src(['./dist/dart/*', '!./dist/dart/.gitignore'], {read: false})
     .pipe(tasks.clean())
     .on('end', function () {
       // ./lib/dart-sdk/bin must be in PATH

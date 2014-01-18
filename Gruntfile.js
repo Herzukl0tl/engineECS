@@ -26,8 +26,8 @@ module.exports = function (grunt) {
       }
     },
     clean: {
-      js: 'dist/js/*',
-      dart: 'dist/dart/*',
+      js: ['dist/js/*', '!dist/js/.gitignore'],
+      dart: ['dist/dart/*', '!dist/dart/.gitignore'],
       githooks: '.git/hooks/pre-commit'
     },
     browserify: {
