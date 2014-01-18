@@ -86,9 +86,9 @@ gulp.task('bump', function () {
 });
 
 gulp.task('default', function () {
+  gulp.run('githooks');
+
   if ('js' in gulp.env) gulp.run('default:js');
   else if ('dart' in gulp.env) gulp.run('default:dart');
   else gulp.run('default:js', 'default:dart');
-
-  gulp.run('githooks');
 });
