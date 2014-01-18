@@ -14,9 +14,9 @@
   "keywords": [
     "game",
     "engine",
-    "entities",
-    "components",
-    "systems",
+    "entity",
+    "component",
+    "system",
     "ecs"
   ],
   "author": "herzukl0tl",
