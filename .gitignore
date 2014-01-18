@@ -1,5 +1,7 @@
-*.sublime-workspace
-
 node_modules
 
-lib/dart-sdk
+dist/dart
+dist/js
+
+*.sublime-workspace
+
