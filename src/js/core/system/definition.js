@@ -1,7 +1,8 @@
 'use strict';
 
 var system;
-var component = require('../component/index');
+var component = require('../component');
+var privates = Object.create(null);
 
 function SystemDefinition(name, definition, components, context) {
   this.name = name;
@@ -10,7 +11,9 @@ function SystemDefinition(name, definition, components, context) {
   this.context = context || this;
 
   this.entities = [];
-  this.componentPacks = [];
+  this._deferredEntities = [];
+  this._componentPacks = Object.create(null);
+  this._removeEntities = Object.create(null);
 
   systemListenComponents(this, components);
   if (system === undefined) system = require('../system');
@@ -20,12 +23,12 @@ SystemDefinition.prototype.add = function SystemDefinitionAdd(entity) {
   if (this.entities.indexOf(entity) > -1) return false;
 
   var componentPack = this.check(entity);
-  if (!componentPack) return false;
+  if (componentPack === null) return false;
 
   this.entities.push(entity);
-  this.componentPacks.push(componentPack);
+  this._componentPacks[entity] = componentPack;
 
-  return this;
+  return true;
 };
 
 SystemDefinition.prototype.remove = function SystemDefinitionRemove(entity) {
@@ -34,16 +37,16 @@ SystemDefinition.prototype.remove = function SystemDefinitionRemove(entity) {
   if (index < 0) return false;
 
   this.entities.splice(index, 1);
-  this.componentPack.splice(index, 1);
+  delete this._componentPacks[entity];
 
-  return this;
+  return true;
 };
 
 SystemDefinition.prototype.check = function SystemDefinitionCheck(entity) {
   var componentPack = Object.create(null);
   for (var i = this.components.length - 1; i >= 0; i--) {
     var comp = component(this.components[i]).of(entity);
-    if (comp === undefined) return false;
+    if (comp === undefined) return null;
     componentPack[this.components[i]] = comp;
   }
 
@@ -51,24 +54,29 @@ SystemDefinition.prototype.check = function SystemDefinitionCheck(entity) {
 };
 
 SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentPack) {
+  systemParseDeferred(this);
   if (arguments.length === 2) {
     system.trigger('before:' + this.name, entity, componentPack);
     systemDefinitionRunEntity(this, entity, componentPack);
     system.trigger('after:' + this.name, entity, componentPack);
   } else {
-    system.trigger('before:' + this.name, this.entities, this.componentPacks);
+    system.trigger('before:' + this.name, this.entities, this._componentPacks);
     systemAutosort(this);
     var length = this.entities.length;
     for (var i = 0; i < length; i++) {
-      systemDefinitionRunEntity(this, this.entities[i], this.componentPacks[i]);
+      systemDefinitionRunEntity(this, this.entities[i], this._componentPacks[this.entities[i]]);
     }
-    system.trigger('after:' + this.name, this.entities, this.componentPacks);
+    system.trigger('after:' + this.name, this.entities, this._componentPacks);
   }
   return this;
 };
 
 SystemDefinition.prototype.sort = function SystemSort() {
 
+};
+
+SystemDefinition.prototype.refresh = function SystemSort() {
+  systemParseDeferred(this);
 };
 
 function systemDefinitionRunEntity(self, entity, componentPack) {
@@ -81,10 +89,30 @@ function systemDefinitionRunEntity(self, entity, componentPack) {
   self.definition.call(components, entity);
 }
 
+function systemParseDeferred(self) {
+  for (var i = 0; i < self._deferredEntities.length; i++) {
+    var entity = self._deferredEntities[i];
+    if (self._removeEntities[entity] !== undefined) {
+      self.remove(entity);
+      delete self._removeEntities[entity];
+      continue;
+    }
+
+    self.add(entity);
+  }
+
+  self._deferredEntities.length = 0;
+}
+
+privates.addToDeferred = function systemAddToDeferred(entity, componentName) {
+  this._deferredEntities.push(entity);
+  if (componentName !== undefined) this._removeEntities[entity] = componentName;
+};
+
 function systemListenComponents(self, components) {
   for (var i = 0; i < components.length; i++) {
-    component.on('create:' + components[i], self.add, self);
-    component.on('remove:' + components[i], self.remove, self);
+    component.on('add:' + components[i], privates.addToDeferred, self);
+    component.on('remove:' + components[i], privates.addToDeferred, self);
   }
 }
 

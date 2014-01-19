@@ -31,7 +31,7 @@
         entity("box").create({
             render : {
                 context : canvas.getContext('2d'),
-                color : "white"
+                color : "blue"
             },
             size : {
                 width : 50,
@@ -43,7 +43,7 @@
             }
         });
         system.on('before:toto', function(){
-            console.log("yo");
+            canvas.getContext('2d').clearRect(0,0,800,600);
         });
         system.on('after:toto', function(){
             console.log("oy");
