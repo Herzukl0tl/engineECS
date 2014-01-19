@@ -1,7 +1,7 @@
 'use strict';
 
+var EventEmitter = require('../../../../lib/js/events-emitter.min');
 var SystemDefinition = require('./definition');
-
 
 function system(name) {
   if (name in system._definitions) {
@@ -11,6 +11,7 @@ function system(name) {
   throw new Error();
 }
 
+EventEmitter.mixins(system);
 
 system._definitions = Object.create(null);
 
@@ -43,17 +44,8 @@ system.order = function systemOrder(newList) {
 
 system.run = function systemRun() {
   for (var x = 0; x < system._listLength; x++) {
-    system._list[x].run();
+    system(system._list[x]).run();
   }
 };
-
-system.refresh = function systemRefresh(entity) {
-  for (var x = 0; x < system._listLength; x++) {
-    var componentPack = entity.components();
-    if (system._list[x].check(componentPack)) system._list[x].add(entity, componentPack);
-    else system._list[x].remove(entity);
-  }
-};
-
 
 module.exports = system;

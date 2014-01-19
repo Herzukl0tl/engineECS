@@ -1,10 +1,13 @@
 'use strict';
+var cmp;
 
 function ComponentDefinition(name, definition) {
   this.name = name;
   this.definition = definition;
 
   this._components = Object.create(null);
+
+  if (cmp === undefined) cmp = require('../component');
 }
 
 
@@ -32,6 +35,7 @@ ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
 
   this._components[entity] = component;
 
+  cmp.trigger('add:' + this.name, entity);
   return component;
 };
 
@@ -40,6 +44,7 @@ ComponentDefinition.prototype.remove = function ComponentDefinitionRemove(entity
 
   delete this._components[entity];
 
+  cmp.trigger('remove:' + this.name, entity, this.name);
   return true;
 };
 
