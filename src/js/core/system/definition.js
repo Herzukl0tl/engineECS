@@ -1,7 +1,6 @@
 'use strict';
 
 var component = require('../component/index');
-var ARRAY = [];
 
 function SystemDefinition(name, definition, components, context) {
   this.name = name;
@@ -72,8 +71,6 @@ function systemDefinitionRunEntity(self, entity, componentPack) {
   }
 
   self.definition.call(components, entity);
-
-  ARRAY.length = 0;
 }
 
 function systemListenComponents(self, components) {

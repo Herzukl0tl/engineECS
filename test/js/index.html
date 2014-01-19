@@ -3,17 +3,45 @@
     <title>HERZUKLOTL</title>
 </head>
 <body>
+    <canvas id="canvas" width="800" height="400"></canvas>
     <script type="text/javascript" src="../../dist/js/ecs.js"></script>
     <script type="text/javascript">
         system.define("toto", function(){
-            console.log(this);
-        }, ["position","size"])
-        component.define("position", function(){return {x : 5}})
-        component.define("size", function(){return {width : 5}})
-        entity.define("toto", {
-           components : ["position", "size"]
-        })
-        entity("toto").create();
+            var context = this.render.context;
+            context.fillStyle = this.render.color;
+            context.fillRect(this.position.x, this.position.y, this.size.width, this.size.height)
+        }, ["position","size", "render"])
+        component.define("position", function(data){return {x : data.x || 0, y : data.y || 0}})
+        component.define("size", function(data){return {width : data.width || 0, height : data.height || 0}})
+        component.define("render", function(data){return {context : data.context || 0, color : data.color || "black"}})
+        entity.define("box", {
+           components : ["position", "size", "render"]
+        });
+        var canvas = document.getElementById("canvas");
+        entity("box").create({
+            render : {
+                context : canvas.getContext('2d'),
+                color : "red"
+            },
+            size : {
+                width : 800,
+                height : 600
+            }
+        });
+        entity("box").create({
+            render : {
+                context : canvas.getContext('2d'),
+                color : "white"
+            },
+            size : {
+                width : 50,
+                height : 50
+            },
+            position : {
+                x : 100,
+                y : 100
+            }
+        });
         system("toto").run();
     </script>
 </body>
