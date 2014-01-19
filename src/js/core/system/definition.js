@@ -1,5 +1,6 @@
 'use strict';
 
+var system;
 var component = require('../component/index');
 
 function SystemDefinition(name, definition, components, context) {
@@ -12,6 +13,7 @@ function SystemDefinition(name, definition, components, context) {
   this.componentPacks = [];
 
   systemListenComponents(this, components);
+  if (system === undefined) system = require('../system');
 }
 
 SystemDefinition.prototype.add = function SystemDefinitionAdd(entity) {
@@ -50,17 +52,22 @@ SystemDefinition.prototype.check = function SystemDefinitionCheck(entity) {
 
 SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentPack) {
   if (arguments.length === 2) {
-    window.system.trigger('before:' + this.name, entity, componentPack);
+    system.trigger('before:' + this.name, entity, componentPack);
     systemDefinitionRunEntity(this, entity, componentPack);
-    window.system.trigger('after:' + this.name, entity, componentPack);
+    system.trigger('after:' + this.name, entity, componentPack);
   } else {
-    window.system.trigger('before:' + this.name, this.entities, this.componentPacks);
+    system.trigger('before:' + this.name, this.entities, this.componentPacks);
+    systemAutosort(this);
     var length = this.entities.length;
     for (var i = 0; i < length; i++) {
       systemDefinitionRunEntity(this, this.entities[i], this.componentPacks[i]);
     }
-    window.system.trigger('after:' + this.name, this.entities, this.componentPacks);
+    system.trigger('after:' + this.name, this.entities, this.componentPacks);
   }
+};
+
+SystemDefinition.prototype.sort = function SystemSort() {
+
 };
 
 function systemDefinitionRunEntity(self, entity, componentPack) {
@@ -78,6 +85,10 @@ function systemListenComponents(self, components) {
     component.on('create:' + components[i], self.add, self);
     component.on('remove:' + components[i], self.remove, self);
   }
+}
+
+function systemAutosort(self) {
+  console.log(self);
 }
 
 module.exports = SystemDefinition;

@@ -42,7 +42,14 @@
                 y : 100
             }
         });
-        system("toto").run();
+        system.on('before:toto', function(){
+            console.log("yo");
+        });
+        system.on('after:toto', function(){
+            console.log("oy");
+        });
+        system.run();
+
     </script>
 </body>
 </html>

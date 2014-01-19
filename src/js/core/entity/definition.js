@@ -1,7 +1,7 @@
 'use strict';
 
 var component = require('../component'),
-  entity = window.entity,
+  entity,
 
   nextEntityId = 1;
 
@@ -19,6 +19,8 @@ function EntityDefinition(name, source) {
   this._defaultsHaveChanged = true;
 
   this._entities = [];
+
+  if (entity === undefined) entity = require('../entity');
 }
 
 

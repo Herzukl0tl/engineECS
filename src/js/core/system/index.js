@@ -44,15 +44,7 @@ system.order = function systemOrder(newList) {
 
 system.run = function systemRun() {
   for (var x = 0; x < system._listLength; x++) {
-    system._list[x].run();
-  }
-};
-
-system.refresh = function systemRefresh(entity) {
-  for (var x = 0; x < system._listLength; x++) {
-    var componentPack = entity.components();
-    if (system._list[x].check(componentPack)) system._list[x].add(entity, componentPack);
-    else system._list[x].remove(entity);
+    system(system._list[x]).run();
   }
 };
 

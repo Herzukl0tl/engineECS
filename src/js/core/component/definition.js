@@ -1,10 +1,13 @@
 'use strict';
+var cmp;
 
 function ComponentDefinition(name, definition) {
   this.name = name;
   this.definition = definition;
 
   this._components = Object.create(null);
+
+  if (cmp === undefined) cmp = require('../component');
 }
 
 
@@ -32,7 +35,7 @@ ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
 
   this._components[entity] = component;
 
-  window.component.trigger('create:' + this.name, entity);
+  cmp.trigger('create:' + this.name, entity);
   return component;
 };
 
@@ -41,6 +44,7 @@ ComponentDefinition.prototype.remove = function ComponentDefinitionRemove(entity
 
   delete this._components[entity];
 
+  cmp.trigger('remove:' + this.name, entity);
   return true;
 };
 
