@@ -1,7 +1,7 @@
 'use strict';
 
+var EventEmitter = require('../../../../lib/js/events-emitter.min');
 var SystemDefinition = require('./definition');
-
 
 function system(name) {
   if (name in system._definitions) {
@@ -11,6 +11,7 @@ function system(name) {
   throw new Error();
 }
 
+EventEmitter.mixins(system);
 
 system._definitions = Object.create(null);
 
@@ -54,6 +55,5 @@ system.refresh = function systemRefresh(entity) {
     else system._list[x].remove(entity);
   }
 };
-
 
 module.exports = system;

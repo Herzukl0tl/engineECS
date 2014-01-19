@@ -1,7 +1,7 @@
 'use strict';
 
 var component = require('../component'),
-  entity = require('../entity'),
+  entity = window.entity,
 
   nextEntityId = 1;
 
@@ -194,8 +194,9 @@ EntityDefinition.prototype.compile = function EntityDefinitionCompile() {
       tail = '  ' + identifier + '.' + path + ' = ' + JSON.stringify(paths[path]) + ';\n' + tail;
     }
   }
-
-  head += '  var ' + identifiers.join(', ') + ';\n';
+  if (identifiers.length > 0) {
+    head += '  var ' + identifiers.join(', ') + ';\n';
+  }
 
   head += '\n';
 
@@ -210,7 +211,6 @@ EntityDefinition.prototype.compile = function EntityDefinitionCompile() {
   }
 
   head += '\n';
-
   this.definition = new Function('component', head + tail)(component);
 
   this._sourceHasChanged = false;

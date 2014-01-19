@@ -1,5 +1,6 @@
 'use strict';
 
+var EventEmitter = require('../../../../lib/js/events-emitter.min');
 var ComponentDefinition = require('./definition');
 
 
@@ -11,6 +12,7 @@ function component(name) {
   throw new Error();
 }
 
+EventEmitter.mixins(component);
 
 component._definitions = Object.create(null);
 

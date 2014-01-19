@@ -32,6 +32,7 @@ ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
 
   this._components[entity] = component;
 
+  window.component.trigger('create:' + this.name, entity);
   return component;
 };
 

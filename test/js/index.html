@@ -1,0 +1,20 @@
+<html>
+<head>
+    <title>HERZUKLOTL</title>
+</head>
+<body>
+    <script type="text/javascript" src="../../dist/js/ecs.js"></script>
+    <script type="text/javascript">
+        system.define("toto", function(){
+            console.log(this);
+        }, ["position","size"])
+        component.define("position", function(){return {x : 5}})
+        component.define("size", function(){return {width : 5}})
+        entity.define("toto", {
+           components : ["position", "size"]
+        })
+        entity("toto").create();
+        system("toto").run();
+    </script>
+</body>
+</html>
