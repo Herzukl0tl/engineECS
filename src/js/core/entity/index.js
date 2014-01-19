@@ -1,5 +1,6 @@
 'use strict';
 
+var EventEmitter = require('../../../../lib/js/events-emitter.min');
 var EntityDefinition = require('./definition');
 
 
@@ -11,6 +12,7 @@ function entity(name) {
   throw new Error();
 }
 
+EventEmitter.mixins(entity);
 
 entity._definitions = Object.create(null);
 

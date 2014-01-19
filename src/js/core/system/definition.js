@@ -64,6 +64,7 @@ SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentP
     }
     system.trigger('after:' + this.name, this.entities, this.componentPacks);
   }
+  return this;
 };
 
 SystemDefinition.prototype.sort = function SystemSort() {

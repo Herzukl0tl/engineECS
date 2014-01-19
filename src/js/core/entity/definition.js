@@ -55,7 +55,7 @@ EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
   }
 
   this._entities.push(id);
-
+  entity.trigger('create:' + this.name, id);
   return id;
 };
 
@@ -72,6 +72,10 @@ EntityDefinition.prototype.destroy = function EntityDefinitionDestroy(id) {
       break;
     }
   }
+
+  entity.trigger('remove:' + this.name, id);
+
+  return this;
 };
 
 EntityDefinition.prototype.source = function EntityDefinitionSource(value) {
@@ -97,6 +101,8 @@ EntityDefinition.prototype.source = function EntityDefinitionSource(value) {
     this._defaultsHaveChanged = true;
     this._sourceHasChanged = true;
   }
+
+  return this;
 };
 
 EntityDefinition.prototype.components = function EntityDefinitionComponents() {
