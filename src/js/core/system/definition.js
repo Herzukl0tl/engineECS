@@ -15,6 +15,8 @@ function SystemDefinition(name, definition, components, context) {
   this._componentPacks = Object.create(null);
   this._removeEntities = Object.create(null);
 
+  this._priority = 0;
+
   systemListenComponents(this, components);
   if (system === undefined) system = require('../system');
 }

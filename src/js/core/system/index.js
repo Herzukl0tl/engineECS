@@ -34,13 +34,18 @@ system.define = function systemDefine(name, definition, components, context) {
   return systemDefinition;
 };
 
-system.order = function systemOrder(newList) {
-  if (Array.isArray(newList)) system._list = newList;
+system.priority = function systemPriority(name, prio) {
+  if (arguments.length === 1) {
+    return system(name)._priority;
+  }
 
-  system._listLength = system._list.length;
-
-  return system._list;
+  system(name)._priority = prio;
+  system._list.sort(systemsPriorityComparator);
 };
+
+function systemsPriorityComparator(a, b) {
+  return a._priority - b._priority;
+}
 
 system.run = function systemRun() {
   for (var x = 0; x < system._listLength; x++) {
