@@ -1,9 +1,7 @@
 'use strict';
 
 var component = require('../component'),
-  entity,
-
-  nextEntityId = 1;
+  entity;
 
 
 function EntityDefinition(name, source) {
@@ -25,7 +23,7 @@ function EntityDefinition(name, source) {
 
 
 EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
-  var id = nextEntityId++;
+  var id = entity.next();
 
   if (this._sourceHasChanged) {
     this.compile();
