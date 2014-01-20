@@ -1,15 +1,12 @@
 // TODO
-// sanitize rTokens template
 // write a better query.compile()
-// implement query.filter()
-// define standard queries
-//   query('components', ...)
-//   query('factories', ...)
+// define the * and components cmd
 
 'use strict';
 
 var rSpaces = /\s+/g,
-  rTokens = /[^&|!()]+|[&|!()]/g;
+  rTokens = /[^&|!()]+|[&|!()]/g,
+  rEscapeRegExp = /([.*+?^=!:${}()|\[\]\/\\])/g;
 
 
 function query(cmd, expression) {
@@ -58,8 +55,14 @@ query.tokens = function queryTokens(values) {
     template += tokens[property];
   }
 
+  template = escapeRegExp(template);
+
   rTokens = new RegExp('[^' + template + ']+|[' + template + ']', 'g');
 };
+
+function escapeRegExp(string) {
+  return string.replace(rEscapeRegExp, "\\$1");
+}
 
 query.define = function queryDefine(cmd, definition) {
   if (cmd in query._definitions) {
