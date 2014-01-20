@@ -49,7 +49,7 @@ query.tokens = function queryTokens(values) {
 
   for (var property in tokens) {
     if (property in values) {
-      tokens[property] = value[property];
+      tokens[property] = values[property];
     }
 
     template += tokens[property];
@@ -61,7 +61,7 @@ query.tokens = function queryTokens(values) {
 };
 
 function escapeRegExp(string) {
-  return string.replace(rEscapeRegExp, "\\$1");
+  return string.replace(rEscapeRegExp, '\\$1');
 }
 
 query.define = function queryDefine(cmd, definition) {

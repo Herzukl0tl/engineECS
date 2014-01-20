@@ -4,11 +4,12 @@ var system;
 var component = require('../component');
 var privates = Object.create(null);
 
-function SystemDefinition(name, definition, components, context) {
+function SystemDefinition(name, components, definition) {
   this.name = name;
   this.definition = definition;
   this.components = components;
-  this.context = context || this;
+
+  this._context = Object.create(null);
 
   this.entities = [];
   this._deferredEntities = [];
@@ -18,6 +19,7 @@ function SystemDefinition(name, definition, components, context) {
   this._priority = 0;
 
   systemListenComponents(this, components);
+
   if (system === undefined) system = require('../system');
 }
 
@@ -108,13 +110,14 @@ SystemDefinition.prototype.refresh = function SystemDefinitionRefresh() {
 };
 
 function systemDefinitionRunEntity(self, entity, componentPack) {
-  var components = Object.create(null);
+  var context = self._context,
+    components = self.components;
 
-  for (var i = self.components.length - 1; i >= 0; i--) {
-    components[self.components[i]] = componentPack[self.components[i]];
+  for (var i = components.length - 1; i >= 0; i--) {
+    context[components[i]] = componentPack[components[i]];
   }
 
-  self.definition.call(components, entity);
+  self.definition.call(context, entity);
 }
 
 function systemParseDeferred(self) {
