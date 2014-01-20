@@ -55,27 +55,53 @@ SystemDefinition.prototype.check = function SystemDefinitionCheck(entity) {
 
 SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentPack) {
   systemParseDeferred(this);
+
   if (arguments.length === 2) {
     system.trigger('before:' + this.name, entity, componentPack);
+
     systemDefinitionRunEntity(this, entity, componentPack);
+
     system.trigger('after:' + this.name, entity, componentPack);
   } else {
     system.trigger('before:' + this.name, this.entities, this._componentPacks);
-    systemAutosort(this);
+
+    if (this._autosortComparator !== null) {
+      this.entities.sort(this._autosortComparator);
+    }
+
     var length = this.entities.length;
+
     for (var i = 0; i < length; i++) {
       systemDefinitionRunEntity(this, this.entities[i], this._componentPacks[this.entities[i]]);
     }
+
     system.trigger('after:' + this.name, this.entities, this._componentPacks);
   }
+
   return this;
 };
 
-SystemDefinition.prototype.sort = function SystemSort() {
+SystemDefinition.prototype.sort = function SystemDefinitionSort(comparator) {
+  this.entities.sort(comparator);
 
+  return this;
 };
 
-SystemDefinition.prototype.refresh = function SystemSort() {
+SystemDefinition.prototype.autosort = function SystemDefinitionAutoSort(comparator) {
+  if (arguments.length === 0) {
+    return this._autosortComparator;
+  }
+
+  if (typeof comparator === 'function' || comparator === null) {
+    this._autosortComparator = comparator;
+
+    return this;
+  }
+
+  throw new Error();
+}
+
+SystemDefinition.prototype.refresh = function SystemDefinitionRefresh() {
   systemParseDeferred(this);
 };
 
@@ -114,10 +140,6 @@ function systemListenComponents(self, components) {
     component.on('add:' + components[i], privates.addToDeferred, self);
     component.on('remove:' + components[i], privates.addToDeferred, self);
   }
-}
-
-function systemAutosort(self) {
-  console.log(self);
 }
 
 module.exports = SystemDefinition;
