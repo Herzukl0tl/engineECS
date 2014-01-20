@@ -12,28 +12,37 @@ var rSpaces = /\s+/g,
   rTokens = /[^&|!()]+|[&|!()]/g;
 
 
-function query(name, expression) {
-  if (name in query._definitions) {
-    return query._definitions[name](expression);
+function query(cmd, expression) {
+  if (cmd in query._aliases) {
+    var params = query._aliases[cmd];
+
+    cmd = params.cmd;
+    expression = params.expression;
+  }
+
+  if (cmd in query._definitions) {
+    return invokeQuery(cmd, expression);
   }
 
   throw new Error();
 }
 
+function invokeQuery(cmd, expression) {
+  return query._definitions[cmd](expression);
+}
 
 query._definitions = Object.create(null);
-
+query._aliases = Object.create(null);
 query._cache = Object.create(null);
-
 query._tokens = Object.create(null);
 
-query._tokens.and = '&';
-query._tokens.or = '|';
+query._tokens.and = ',';
+query._tokens.or = 'OR';
 query._tokens.not = '!';
 query._tokens.open = '(';
 query._tokens.close = ')';
 
-query.tokens = function queryTokens(value) {
+query.tokens = function queryTokens(values) {
   if (arguments.length === 0) {
     return query._tokens;
   }
@@ -42,7 +51,7 @@ query.tokens = function queryTokens(value) {
     template = '';
 
   for (var property in tokens) {
-    if (property in value) {
+    if (property in values) {
       tokens[property] = value[property];
     }
 
@@ -52,12 +61,24 @@ query.tokens = function queryTokens(value) {
   rTokens = new RegExp('[^' + template + ']+|[' + template + ']', 'g');
 };
 
-query.define = function queryDefine(name, definition) {
-  if (name in query._definitions) {
+query.define = function queryDefine(cmd, definition) {
+  if (cmd in query._definitions) {
     throw new Error();
   }
 
-  query._definitions[name] = definition;
+  query._definitions[cmd] = definition;
+};
+
+query.alias = function queryAlias(alias, params) {
+  if (alias in query._aliases) {
+    throw new Error();
+  }
+
+  if (typeof params === 'object' && params !== null) {
+    query._aliases[alias] = params;
+  }
+
+  throw new Error();
 };
 
 query.compile = function queryCompile(input) {
