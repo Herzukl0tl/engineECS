@@ -1,8 +1,9 @@
 'use strict';
 
 var system;
-var component = require('../component');
-var privates = Object.create(null);
+var component = require('../component'),
+  privates = Object.create(null),
+  eventsOptions = {};
 
 function SystemDefinition(name, components, definition) {
   this.name = name;
@@ -103,7 +104,7 @@ SystemDefinition.prototype.autosort = function SystemDefinitionAutoSort(comparat
   }
 
   throw new Error();
-}
+};
 
 SystemDefinition.prototype.refresh = function SystemDefinitionRefresh() {
   systemParseDeferred(this);
@@ -141,9 +142,13 @@ privates.addToDeferred = function systemAddToDeferred(entity, componentName) {
 };
 
 function systemListenComponents(self, components) {
+  var options = eventsOptions;
+
+  options.context = self;
+
   for (var i = 0; i < components.length; i++) {
-    component.on('add:' + components[i], privates.addToDeferred, self);
-    component.on('remove:' + components[i], privates.addToDeferred, self);
+    component.on('add:' + components[i], privates.addToDeferred, options);
+    component.on('remove:' + components[i], privates.addToDeferred, options);
   }
 }
 
