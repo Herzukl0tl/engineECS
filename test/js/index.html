@@ -6,18 +6,37 @@
     <canvas id="canvas" width="800" height="400"></canvas>
     <script type="text/javascript" src="../../dist/js/ecs.js"></script>
     <script type="text/javascript">
-        system.define("toto", function(){
+        system.define("toto", ["position", "size", "render"], function (){
             var context = this.render.context;
+
             context.fillStyle = this.render.color;
             context.fillRect(this.position.x, this.position.y, this.size.width, this.size.height)
-        }, ["position","size", "render"])
-        component.define("position", function(data){return {x : data.x || 0, y : data.y || 0}})
-        component.define("size", function(data){return {width : data.width || 0, height : data.height || 0}})
-        component.define("render", function(data){return {context : data.context || 0, color : data.color || "black"}})
+        });
+
+        component.define("position", function (data){
+            return {
+                x : data.x || 0, y : data.y || 0
+            };
+        });
+
+        component.define("size", function(data){
+            return {
+                width : data.width || 0, height : data.height || 0
+            };
+        });
+
+        component.define("render", function(data) {
+            return {
+                context : data.context || 0, color : data.color || "black"
+            };
+        });
+
         entity.define("box", {
            components : ["position", "size", "render"]
         });
+
         var canvas = document.getElementById("canvas");
+
         entity("box").create({
             render : {
                 context : canvas.getContext('2d'),
@@ -28,6 +47,7 @@
                 height : 600
             }
         });
+
         entity("box").create({
             render : {
                 context : canvas.getContext('2d'),
@@ -42,12 +62,15 @@
                 y : 100
             }
         });
+
         system.on('before:toto', function(){
             canvas.getContext('2d').clearRect(0,0,800,600);
         });
+
         system.on('after:toto', function(){
             console.log("oy");
         });
+
         system.run();
 
     </script>
