@@ -26,11 +26,11 @@ function SystemDefinition(name, components, definition) {
 
 /**
  * Function which check if the entity parameter is valid for this system
- * 
+ *
  * If No : return false
- * 
+ *
  * If Yes : add the entity to the entities list of the system, and return true
- * 
+ *
  * @param {number} entity The entity to add
  */
 SystemDefinition.prototype.add = function SystemDefinitionAdd(entity) {
