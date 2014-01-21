@@ -24,6 +24,15 @@ function SystemDefinition(name, components, definition) {
   if (system === undefined) system = require('../system');
 }
 
+/**
+ * Function which check if the entity parameter is valid for this system
+ * 
+ * If No : return false
+ * 
+ * If Yes : add the entity to the entities list of the system, and return true
+ * 
+ * @param {number} entity The entity to add
+ */
 SystemDefinition.prototype.add = function SystemDefinitionAdd(entity) {
   if (this.entities.indexOf(entity) > -1) return false;
 

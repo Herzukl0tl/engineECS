@@ -1,7 +1,8 @@
 'use strict';
 
+var jsdox = require('gulp-jsdox');
 var gulp = require('gulp'),
-  tasks = require('load-gulp-tasks')(),
+  tasks = require('gulp-load-tasks')(),
   pkg = require('./package.json');
 
 // todo
@@ -20,6 +21,7 @@ gulp.task('build:js', ['lint:js'], function () {
       gulp.src('./src/js/*.js')
         .pipe(tasks.browserify())
         .pipe(rename(pkg.name + '.js'))
+        .pipe(jsdox({output : './doc/js'}))
         .pipe(gulp.dest('./dist/js'))
         .pipe(tasks.uglify())
         .pipe(rename(pkg.name + '.min.js'))
@@ -90,3 +92,8 @@ gulp.task('default', function () {
   else if ('dart' in gulp.env) gulp.run('default:dart');
   else gulp.run('default:js', 'default:dart');
 });
+
+gulp.task('jsdox:js', function(){
+    gulp.src(['./src/js/**/*.js'])
+    .pipe(jsdox({output : './doc/js', root : 'js'}));
+})
