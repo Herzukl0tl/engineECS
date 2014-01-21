@@ -1,6 +1,6 @@
 'use strict';
 
-var jsdox = require('gulp-jsdox');
+var jsdox = require('gulp-jsdox-struct');
 var gulp = require('gulp'),
   tasks = require('gulp-load-tasks')(),
   pkg = require('./package.json');
