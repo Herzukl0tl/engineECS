@@ -95,5 +95,6 @@ gulp.task('default', function () {
 
 gulp.task('jsdox:js', function(){
     gulp.src(['./src/js/**/*.js'])
-    .pipe(jsdox({output : './doc/js', root : 'js'}));
+    .pipe(jsdox({output : '../engineECS.wiki/API/js', root : 'js'}));
+    jsdox.buildLinks('../engineECS.wiki');
 })

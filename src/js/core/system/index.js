@@ -19,7 +19,15 @@ system._list = [];
 
 system._listLength = 0;
 
-
+/**
+ * Function which check if the entity parameter is valid for this system
+ *
+ * If No : return false
+ *
+ * If Yes : add the entity to the entities list of the system, and return true
+ *
+ * @param {number} entity The entity to add
+ */
 system.define = function systemDefine(name, definition, components, context) {
   if (name in system._definitions) {
     throw new Error();
