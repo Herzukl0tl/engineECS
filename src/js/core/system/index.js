@@ -28,12 +28,12 @@ system._listLength = 0;
  *
  * @param {number} entity The entity to add
  */
-system.define = function systemDefine(name, definition, components, context) {
+system.define = function systemDefine(name, definition, components, options) {
   if (name in system._definitions) {
     throw new Error();
   }
 
-  var systemDefinition = new SystemDefinition(name, definition, components, context);
+  var systemDefinition = new SystemDefinition(name, definition, components, options);
 
   system._definitions[name] = systemDefinition;
   system._list.push(name);

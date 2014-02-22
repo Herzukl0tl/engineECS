@@ -2,10 +2,13 @@
 
 var system;
 var component = require('../component'),
+  Scheduler = require('../../scheduler/scheduler'),
   privates = Object.create(null),
   eventsOptions = {};
 
-function SystemDefinition(name, components, definition) {
+function SystemDefinition(name, components, definition, options) {
+  if (Object.prototype.toString.call(options) !== '[object Object]') options = Object.create(null);
+
   this.name = name;
   this.definition = definition;
   this.components = components;
@@ -18,6 +21,9 @@ function SystemDefinition(name, components, definition) {
   this._removeEntities = Object.create(null);
 
   this._priority = 0;
+
+  this._scheduler = new Scheduler(options.msPerUpdate, options.strict, options.extrapolation);
+  this._scheduler.start();
 
   systemListenComponents(this, components);
 
@@ -68,31 +74,36 @@ SystemDefinition.prototype.check = function SystemDefinitionCheck(entity) {
 };
 
 SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentPack) {
-  systemParseDeferred(this);
+  var self = this;
+  systemParseDeferred(self);
 
   if (arguments.length === 2) {
-    system.trigger('before:' + this.name, entity, componentPack);
+    system.trigger('before:' + self.name, entity, componentPack);
 
-    systemDefinitionRunEntity(this, entity, componentPack);
+    systemDefinitionRunEntity(self, entity, componentPack);
 
-    system.trigger('after:' + this.name, entity, componentPack);
+    system.trigger('after:' + self.name, entity, componentPack);
   } else {
-    system.trigger('before:' + this.name, this.entities, this._componentPacks);
+    system.trigger('before:' + self.name, self.entities, self._componentPacks);
 
-    if (this._autosortComparator !== null) {
-      this.entities.sort(this._autosortComparator);
+    if (self._autosortComparator !== null) {
+      self.entities.sort(self._autosortComparator);
     }
 
-    var length = this.entities.length;
+    var length = self.entities.length;
 
-    for (var i = 0; i < length; i++) {
-      systemDefinitionRunEntity(this, this.entities[i], this._componentPacks[this.entities[i]]);
-    }
 
-    system.trigger('after:' + this.name, this.entities, this._componentPacks);
+    self._scheduler.run(function (deltaTime) {
+      for (var i = 0; i < length; i++) {
+        self._context._deltaTime = deltaTime;
+        systemDefinitionRunEntity(self, self.entities[i], self._componentPacks[self.entities[i]]);
+      }
+    });
+
+    system.trigger('after:' + self.name, self.entities, self._componentPacks);
   }
 
-  return this;
+  return self;
 };
 
 SystemDefinition.prototype.sort = function SystemDefinitionSort(comparator) {

@@ -3,6 +3,7 @@
     <title>HERZUKLOTL</title>
 </head>
 <body>
+    <div id="counter"></div>
     <canvas id="canvas" width="800" height="400"></canvas>
     <script type="text/javascript" src="../../dist/js/ecs.js"></script>
     <script type="text/javascript">
@@ -11,7 +12,12 @@
 
             context.fillStyle = this.render.color;
             context.fillRect(this.position.x, this.position.y, this.size.width, this.size.height)
-        });
+        }, {msPerUpdate : 16, strict : false});
+
+        system.define("movement", ["position", "velocity"], function (){
+            this.position.x += this.velocity.x*this._deltaTime;
+            this.position.y += this.velocity.y*this._deltaTime;
+        }, {msPerUpdate : 16, strict : true, extrapolation : true});
 
         component.define("position", function (data){
             return {
@@ -31,8 +37,17 @@
             };
         });
 
+        component.define("velocity", function(data) {
+            return {
+                x : data.x || 0, y : data.y || 0
+            };
+        });
+
         entity.define("box", {
            components : ["position", "size", "render"]
+        });
+        entity.define("player", {
+           components : ["position", "size", "render", "velocity"]
         });
 
         var canvas = document.getElementById("canvas");
@@ -47,31 +62,40 @@
                 height : 600
             }
         });
-
-        entity("box").create({
-            render : {
-                context : canvas.getContext('2d'),
-                color : "blue"
-            },
-            size : {
-                width : 50,
-                height : 50
-            },
-            position : {
-                x : 100,
-                y : 100
+        var counter = document.getElementById("counter");
+            for(var i = 0; i < 3000; i++){
+                entity("player").create({
+                    render : {
+                        context : canvas.getContext('2d'),
+                        color : "blue"
+                    },
+                    size : {
+                        width : 5,
+                        height : 5
+                    },
+                    position : {
+                        x : 400,
+                        y : 200
+                    },
+                    velocity : {
+                        x : Math.random()*10 - 5,
+                        y :  Math.random()*10 - 5
+                    }
+                });
             }
-        });
 
         system.on('before:toto', function(){
             canvas.getContext('2d').clearRect(0,0,800,600);
         });
 
         system.on('after:toto', function(){
-            console.log("oy");
+            //console.log(system('toto'));
         });
-
-        system.run();
+        function run(){
+            system.run();
+            requestAnimationFrame(run);
+        }
+        requestAnimationFrame(run);
 
     </script>
 </body>
