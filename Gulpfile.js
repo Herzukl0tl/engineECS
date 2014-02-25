@@ -1,7 +1,7 @@
 'use strict';
 
 var gulp = require('gulp'),
-  tasks = require('load-gulp-tasks')(),
+  tasks = require('gulp-load-tasks')(),
   pkg = require('./package.json');
 
 // todo
@@ -15,14 +15,14 @@ gulp.task('lint:js', function () {
 
 gulp.task('build:js', ['lint:js'], function () {
   return gulp.src(['./dist/js/*', '!./dist/dart/.gitignore'], {read: false})
-    .pipe(clean())
+    .pipe(tasks.clean())
     .on('end', function () {
       gulp.src('./src/js/*.js')
         .pipe(tasks.browserify())
-        .pipe(rename(pkg.name + '.js'))
+        .pipe(tasks.rename(pkg.name + '.js'))
         .pipe(gulp.dest('./dist/js'))
         .pipe(tasks.uglify())
-        .pipe(rename(pkg.name + '.min.js'))
+        .pipe(tasks.rename(pkg.name + '.min.js'))
         .pipe(gulp.dest('dist/js'));
     });
 });
