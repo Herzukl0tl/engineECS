@@ -6,41 +6,52 @@
     <canvas id="canvas" width="800" height="400"></canvas>
     <script type="text/javascript" src="../../dist/js/ecs.js"></script>
     <script type="text/javascript">
-        system.define("toto", ["position", "size", "render"], function (){
+        system.define('kinematic', ['position', 'velocity'], function () {
+            this.position.x += this.velocity.x;
+            this.position.y += this.velocity.y;
+        });
+
+        system.define('render', ['position', 'size', 'render'], function () {
             var context = this.render.context;
 
             context.fillStyle = this.render.color;
-            context.fillRect(this.position.x, this.position.y, this.size.width, this.size.height)
+            context.fillRect(this.position.x, this.position.y, this.size.width, this.size.height);
         });
 
-        component.define("position", function (data){
+        component.define('position', function (data) {
             return {
                 x : data.x || 0, y : data.y || 0
             };
         });
 
-        component.define("size", function(data){
+        component.define('velocity', function (data) {
+            return {
+                x : data.x || 0, y : data.y || 0
+            };
+        });
+
+        component.define('size', function (data) {
             return {
                 width : data.width || 0, height : data.height || 0
             };
         });
 
-        component.define("render", function(data) {
+        component.define('render', function (data) {
             return {
-                context : data.context || 0, color : data.color || "black"
+                context : data.context || 0, color : data.color || 'black'
             };
         });
 
-        entity.define("box", {
-           components : ["position", "size", "render"]
+        entity.define('box', {
+           components : ['position', 'size', 'render', 'velocity']
         });
 
-        var canvas = document.getElementById("canvas");
+        var canvas = document.getElementById('canvas');
 
-        entity("box").create({
+        var background = entity('box').create({
             render : {
                 context : canvas.getContext('2d'),
-                color : "red"
+                color : 'red'
             },
             size : {
                 width : 800,
@@ -48,10 +59,14 @@
             }
         });
 
-        entity("box").create({
+        component('watcher').add(background).watch('render.color', function (value, old) {
+            console.log('changed background color from ' + old + ' to ' + value);
+        });
+
+        var box = entity('box').create({
             render : {
                 context : canvas.getContext('2d'),
-                color : "blue"
+                color : 'blue'
             },
             size : {
                 width : 50,
@@ -63,12 +78,16 @@
             }
         });
 
-        system.on('before:toto', function(){
+        component('watcher').add(box).watch('position.x', function (value, old) {
+          console.log('changed box x position from ' + value + ' to ' + old);
+        });
+
+        system.on('before:render', function() {
             canvas.getContext('2d').clearRect(0,0,800,600);
         });
 
-        system.on('after:toto', function(){
-            console.log("oy");
+        system.on('after:render', function(){
+            console.log('after render');
         });
 
         system.run();
