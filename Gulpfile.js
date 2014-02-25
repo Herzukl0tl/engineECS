@@ -20,6 +20,7 @@ gulp.task('build:js', ['lint:js'], function () {
       gulp.src('./src/js/*.js')
         .pipe(tasks.browserify())
         .pipe(tasks.rename(pkg.name + '.js'))
+        //.pipe(tasks.jsdox({output : './doc/js'}))
         .pipe(gulp.dest('./dist/js'))
         .pipe(tasks.uglify())
         .pipe(tasks.rename(pkg.name + '.min.js'))
@@ -90,3 +91,9 @@ gulp.task('default', function () {
   else if ('dart' in gulp.env) gulp.run('default:dart');
   else gulp.run('default:js', 'default:dart');
 });
+
+
+//gulp.task('jsdox:js', function() {
+//  gulp.src(['./src/js/**/*.js'])
+//    .pipe(tasks.jsdox({output : './doc/js', root : 'js'}));
+//});
