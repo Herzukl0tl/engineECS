@@ -46,7 +46,7 @@ function compileGetter(path) {
     var fragments = path.split('.');
 
     compileGetter[path] = getter = new Function('c', 'return function compiledGetter(e) {' +
-        'return c("' + fragments.shift() + '").of(e).' + fragments.join('.') +
+      'return c("' + fragments.shift() + '").of(e).' + fragments.join('.') +
       '}'
     )(component);
   }
@@ -63,7 +63,7 @@ function compileSetter(path) {
     var fragments = path.split('.');
 
     compileSetter.cache[path] = setter = new Function('c', 'return function compiledSetter(e,v) {' +
-        'return c("' + fragments.shift() + '").of(e).' + fragments.join('.') + '=v' +
+      'return c("' + fragments.shift() + '").of(e).' + fragments.join('.') + '=v' +
       '}'
     )(component);
   }
