@@ -52,6 +52,6 @@
     "gulp-exec": "~1.0.3",
     "gulp-load-tasks": "~0.1.1",
     "gulp-bump": "~0.1.0",
-    "gulp-jsdox-struct": "~0.1.0"
+    "gulp-jsdox-struct": "~0.2.1"
   }
 }

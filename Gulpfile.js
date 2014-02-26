@@ -1,6 +1,5 @@
 'use strict';
 
-var jsdox = require('gulp-jsdox-struct');
 var gulp = require('gulp'),
   tasks = require('gulp-load-tasks')(),
   pkg = require('./package.json');
@@ -21,7 +20,7 @@ gulp.task('build:js', ['lint:js'], function () {
       gulp.src('./src/js/*.js')
         .pipe(tasks.browserify())
         .pipe(tasks.rename(pkg.name + '.js'))
-        .pipe(jsdox({output : './doc/js'}))
+        //.pipe(tasks.jsdox({output : './doc/js'}))
         .pipe(gulp.dest('./dist/js'))
         .pipe(tasks.uglify())
         .pipe(tasks.rename(pkg.name + '.min.js'))
@@ -93,8 +92,7 @@ gulp.task('default', function () {
   else gulp.run('default:js', 'default:dart');
 });
 
-gulp.task('jsdox:js', function(){
-    gulp.src(['./src/js/**/*.js'])
-    .pipe(jsdox({output : '../engineECS.wiki/API/js', root : 'js'}));
-    jsdox.buildLinks('../engineECS.wiki');
-});
+//gulp.task('jsdox:js', function() {
+//  gulp.src(['./src/js/**/*.js'])
+//    .pipe(tasks.jsdox({output : './doc/js', root : 'js'}));
+//});
