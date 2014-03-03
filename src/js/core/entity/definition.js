@@ -29,7 +29,7 @@ EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
     this.compile();
   }
 
-  this.definition(id);
+  this.definition(id, options);
 
   for (var key in options) {
     if (!(component(key). in (id))) {
@@ -54,6 +54,7 @@ EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
 
   this._entities.push(id);
   entity.trigger('create:' + this.name, id);
+  entity.trigger('create new entity', id, this.name);
   return id;
 };
 
@@ -179,7 +180,7 @@ EntityDefinition.prototype.defaults = function EntityDefinitionDefaults() {
 };
 
 EntityDefinition.prototype.compile = function EntityDefinitionCompile() {
-  var head = 'return function ' + this.name + 'Definition($id) {\n',
+  var head = 'return function ' + this.name + 'Definition($id, $data) {\n',
     tail = '}',
 
     components = this.components(),
@@ -213,13 +214,60 @@ EntityDefinition.prototype.compile = function EntityDefinitionCompile() {
       head += scope[components[i]] + ' = ';
     }
 
-    head += 'component("' + components[i] + '").add($id);\n';
+    head += 'component("' + components[i] + '").add($id, $data["' + components[i] + '"] || Object.create(null));\n';
   }
 
   head += '\n';
   this.definition = new Function('component', head + tail)(component);
 
   this._sourceHasChanged = false;
+};
+
+EntityDefinition.prototype.serialize = function EntityDefinitionSerialize(entity) {
+  if (this._entities.indexOf(entity) <= -1) return null;
+
+  var waitedComponents = [];
+  waitedComponents.push.apply(waitedComponents, this._components);
+
+  var serialized = Object.create(null);
+
+  serialized.factory = this.name;
+  serialized.options = Object.create(null);
+  serialized.addedComponents = Object.create(null);
+
+  for (var i in component._definitions) {
+    var definition = component._definitions[i];
+    if (definition. in (entity)) {
+      var data = definition.of(entity);
+      if (typeof data.toJSON === 'function') data = data.toJSON();
+
+
+      if (this._components.indexOf(i) === -1) {
+        serialized.addedComponents[i] = data;
+      } else {
+        serialized.options[i] = data;
+
+        var index = waitedComponents.indexOf(i);
+        waitedComponents.splice(index, 1);
+      }
+    }
+  }
+
+  serialized.removedComponents = waitedComponents;
+  return JSON.stringify(serialized);
+};
+
+EntityDefinition.prototype.unSerialize = function EntityDefinitionUnSerialize(components) {
+  var entity = this.create(components.options);
+  for (var i in components.addedComponents) {
+    component(i).add(entity, components.addedComponents[i]);
+  }
+  for (i = 0; i < components.removedComponents.length; i++) {
+    var name = components.removedComponents[i];
+    component(name).remove(entity);
+  }
+
+  return entity;
 };
 
 function expandSourceProperty(self, property, scope, keys) {

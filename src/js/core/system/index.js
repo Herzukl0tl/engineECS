@@ -56,9 +56,17 @@ function systemsPriorityComparator(a, b) {
 }
 
 system.run = function systemRun() {
+  system.trigger('before running', system._list);
   for (var x = 0; x < system._listLength; x++) {
     system(system._list[x]).run();
   }
+  system.trigger('after running', system._list);
+};
+
+system.disable = function systemDisable(name) {
+  var index = system._list.indexOf(name);
+  system._list.splice(index, 1);
+  system._listLength--;
 };
 
 module.exports = system;

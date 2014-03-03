@@ -2,7 +2,10 @@
 	"folders":
 	[
 		{
-			"path": "./"
+			"path": "/Users/adriencarta/engineECS"
+		},
+		{
+			"path": "/Users/adriencarta/Fez"
 		}
 	]
 }

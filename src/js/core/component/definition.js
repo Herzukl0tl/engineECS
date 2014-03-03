@@ -36,6 +36,7 @@ ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
   this._components[entity] = component;
 
   cmp.trigger('add:' + this.name, entity);
+
   return component;
 };
 
