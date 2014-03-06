@@ -97,47 +97,6 @@ function unwatch(self, path) {
   delete self.records[path];
 }
 
-WatcherComponent.prototype.check = function WatcherComponentCheck() {
-  for (var path in this.records) {
-    var record = this.records[path],
-      value = record.getter(this.entity);
-
-    if (value !== record.old) {
-      record.listener(value, record.old);
-    }
-
-    record.old = value;
-  }
-};
-
-WatcherComponent.prototype.set = function WatcherComponentSet(path, value) {
-  var record = this.records[path];
-
-  if (record === undefined) {
-    throw new Error();
-  }
-
-  record.setter(this.entity, value);
-
-  this.check();
-};
-
-WatcherComponent.prototype.get = function WatcherComponentGet(path) {
-  var record = this.records[path];
-
-  if (record === undefined) {
-    throw new Error();
-  }
-
-  return record.getter(this.entity);
-};
-
-WatcherComponent.prototype.apply = function WatcherComponentApply(fn) {
-  fn();
-  this.check();
-};
-
-
 component.define('watcher', function (id) {
   return new WatcherComponent(id);
 });
