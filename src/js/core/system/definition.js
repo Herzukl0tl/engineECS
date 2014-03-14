@@ -177,9 +177,13 @@ function systemParseDeferred(self) {
   self._deferredEntities.length = 0;
 }
 
-privates.addToDeferred = function systemAddToDeferred(entity, componentName) {
+privates.addToDeferred = function systemAddToDeferred(entity) {
   this._deferredEntities.push(entity);
-  if (componentName !== undefined) this._removeEntities[entity] = componentName;
+};
+
+privates.addToDeferredAndRemove = function systemAddToDeferredAndRemove(entity, componentName) {
+  this._deferredEntities.push(entity);
+  this._removeEntities[entity] = componentName;
 };
 
 function systemListenComponents(self, components) {
@@ -189,7 +193,10 @@ function systemListenComponents(self, components) {
 
   for (var i = 0; i < components.length; i++) {
     component.on('add:' + components[i], privates.addToDeferred, options);
-    component.on('remove:' + components[i], privates.addToDeferred, options);
+    component.on('enable:' + components[i], privates.addToDeferred, options);
+
+    component.on('remove:' + components[i], privates.addToDeferredAndRemove, options);
+    component.on('disable:' + components[i], privates.addToDeferredAndRemove, options);
   }
 }
 
