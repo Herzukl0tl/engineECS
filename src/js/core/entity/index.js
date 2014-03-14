@@ -2,6 +2,7 @@
 
 var EventEmitter = require('../../../../lib/js/events-emitter.min'),
   EntityDefinition = require('./definition'),
+  component = require('../component'),
   nextEntityId = 0,
   entityList = Object.create(null);
 
@@ -16,7 +17,7 @@ function entity(name) {
 
 EventEmitter.mixins(entity);
 
-entity.on('create new entity', function (id, factory) {
+entity.on('create_entity', function (id, factory) {
   entityList[id] = factory;
 });
 
@@ -39,15 +40,41 @@ entity.define = function entityDefine(name, source) {
 };
 
 entity.serialize = function entitySerialize(id) {
-  var factory = entityList[id];
+  var factory = entity.factory(id);
   return entity(factory).serialize(id);
 };
 
-entity.unSerialize = function entityUnSerialize(serialized) {
+entity.deSerialize = function entityDeSerialize(serialized) {
   var data = JSON.parse(serialized);
   var factory = data.factory;
 
-  return entity(factory).unSerialize(data);
+  return entity(factory).deSerialize(data);
+};
+
+entity.factory = function entityGetFactory(id) {
+  if (entityList[id]) return entityList[id];
+
+  throw new Error();
+};
+
+entity.remove = function entityRemove(id) {
+  var components = component.of(id);
+  var factory = entity(entity.factory(id));
+
+  for (var i = components.length - 1; i >= 0; i -= 1) {
+    component(components[i]).remove(id);
+  }
+
+  for (var j = factory._entities.length - 1; j >= 0; j -= 1) {
+    if (id === factory._entities[j]) {
+      factory._entities.splice(j, 1);
+      break;
+    }
+  }
+
+  entity.trigger('remove:' + factory.name, id);
+  delete entityList[id];
+  return true;
 };
 
 module.exports = entity;

@@ -54,27 +54,8 @@ EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
 
   this._entities.push(id);
   entity.trigger('create:' + this.name, id);
-  entity.trigger('create new entity', id, this.name);
+  entity.trigger('create_entity', id, this.name);
   return id;
-};
-
-EntityDefinition.prototype.destroy = function EntityDefinitionDestroy(id) {
-  var components = this.components();
-
-  for (var i = components.length - 1; i >= 0; i -= 1) {
-    component(components[i]).remove(id);
-  }
-
-  for (var j = this._entities.length - 1; j >= 0; j -= 1) {
-    if (id === this._entities[j]) {
-      this._entities.splice(j, 1);
-      break;
-    }
-  }
-
-  entity.trigger('remove:' + this.name, id);
-
-  return this;
 };
 
 EntityDefinition.prototype.source = function EntityDefinitionSource(value) {
@@ -229,27 +210,26 @@ EntityDefinition.prototype.serialize = function EntityDefinitionSerialize(entity
   var waitedComponents = [];
   waitedComponents.push.apply(waitedComponents, this._components);
 
-  var serialized = Object.create(null);
+  var serialized = Object.create(null),
+    components = component.of(entity);
 
   serialized.factory = this.name;
   serialized.options = Object.create(null);
   serialized.addedComponents = Object.create(null);
 
-  for (var i in component._definitions) {
-    var definition = component._definitions[i];
-    if (definition. in (entity)) {
-      var data = definition.of(entity);
-      if (typeof data.toJSON === 'function') data = data.toJSON();
+  for (var i = components.length - 1; i > 0; i--) {
+    var name = components[i];
+    var definition = component(name);
+    var data = definition.of(entity);
 
+    if (typeof data.toJSON === 'function') data = data.toJSON();
+    if (this._components.indexOf(name) === -1) {
+      serialized.addedComponents[name] = data;
+    } else {
+      serialized.options[name] = data;
 
-      if (this._components.indexOf(i) === -1) {
-        serialized.addedComponents[i] = data;
-      } else {
-        serialized.options[i] = data;
-
-        var index = waitedComponents.indexOf(i);
-        waitedComponents.splice(index, 1);
-      }
+      var index = waitedComponents.indexOf(name);
+      waitedComponents.splice(index, 1);
     }
   }
 
@@ -257,7 +237,7 @@ EntityDefinition.prototype.serialize = function EntityDefinitionSerialize(entity
   return JSON.stringify(serialized);
 };
 
-EntityDefinition.prototype.unSerialize = function EntityDefinitionUnSerialize(components) {
+EntityDefinition.prototype.deSerialize = function EntityDefinitionDeSerialize(components) {
   var entity = this.create(components.options);
   for (var i in components.addedComponents) {
     component(i).add(entity, components.addedComponents[i]);
