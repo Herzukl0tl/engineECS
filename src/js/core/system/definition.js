@@ -2,26 +2,49 @@
 
 var system;
 var component = require('../component'),
+  Scheduler = require('../../scheduler/scheduler'),
   privates = Object.create(null),
   eventsOptions = {};
 
-function SystemDefinition(name, components, definition) {
+function SystemDefinition(name, components, definition, options) {
+  if (Object.prototype.toString.call(options) !== '[object Object]') options = Object.create(null);
+
   this.name = name;
   this.definition = definition;
   this.components = components;
 
-  this._context = Object.create(null);
+  this._context = Object.create(options.context || null);
 
   this.entities = [];
   this._deferredEntities = [];
+  this._sorterManager = Object.create({
+    comparator: function () {},
+    toDeferred: false
+  });
+
   this._componentPacks = Object.create(null);
   this._removeEntities = Object.create(null);
 
   this._priority = 0;
 
+  this._scheduler = new Scheduler(options.msPerUpdate, options.strict, options.extrapolation);
+  this._scheduler.start();
+
   systemListenComponents(this, components);
 
+  if (options.disable !== undefined) {
+    systemDisableSystems(this, options.disable);
+  }
   if (system === undefined) system = require('../system');
+
+  system.on('after running', function () {
+    if (this._sorterManager.toDeferred) {
+      this.entities.sort(this._sorterManager.comparator);
+      this._sorterManager.toDeferred = false;
+    }
+  }, {
+    context: this
+  });
 }
 
 /**
@@ -67,36 +90,45 @@ SystemDefinition.prototype.check = function SystemDefinitionCheck(entity) {
   return componentPack;
 };
 
-SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentPack) {
-  systemParseDeferred(this);
+SystemDefinition.prototype.run = function SystemDefinitionRun(entity) {
+  var self = this;
+  systemParseDeferred(self);
 
-  if (arguments.length === 2) {
-    system.trigger('before:' + this.name, entity, componentPack);
-
-    systemDefinitionRunEntity(this, entity, componentPack);
-
-    system.trigger('after:' + this.name, entity, componentPack);
+  if (arguments.length === 1) {
+    if (this.entities.indexOf(entity) !== -1) {
+      var componentPack = self._componentPacks[entity];
+      system.trigger('before:' + self.name, entity, componentPack);
+      systemDefinitionRunEntity(self, entity, componentPack);
+      system.trigger('after:' + self.name, entity, componentPack);
+      return true;
+    }
+    return false;
   } else {
-    system.trigger('before:' + this.name, this.entities, this._componentPacks);
+    system.trigger('before:' + self.name, self.entities, self._componentPacks);
 
-    if (this._autosortComparator !== null) {
-      this.entities.sort(this._autosortComparator);
+    if (self._autosortComparator !== null && typeof self._autosortComparator === 'function') {
+      self.entities.sort(self._autosortComparator);
     }
 
-    var length = this.entities.length;
+    var length = self.entities.length;
 
-    for (var i = 0; i < length; i++) {
-      systemDefinitionRunEntity(this, this.entities[i], this._componentPacks[this.entities[i]]);
-    }
 
-    system.trigger('after:' + this.name, this.entities, this._componentPacks);
+    self._scheduler.run(function (deltaTime) {
+      for (var i = 0; i < length; i++) {
+        self._context._deltaTime = deltaTime;
+        systemDefinitionRunEntity(self, self.entities[i], self._componentPacks[self.entities[i]]);
+      }
+    });
+
+    system.trigger('after:' + self.name, self.entities, self._componentPacks);
   }
 
-  return this;
+  return self;
 };
 
 SystemDefinition.prototype.sort = function SystemDefinitionSort(comparator) {
-  this.entities.sort(comparator);
+  this._sorterManager.comparator = comparator;
+  this._sorterManager.toDeferred = true;
 
   return this;
 };
@@ -107,7 +139,7 @@ SystemDefinition.prototype.autosort = function SystemDefinitionAutoSort(comparat
   }
 
   if (typeof comparator === 'function' || comparator === null) {
-    this._autosortComparator = comparator;
+    this._autosortComparator = comparator.bind(this._context);
 
     return this;
   }
@@ -158,6 +190,12 @@ function systemListenComponents(self, components) {
   for (var i = 0; i < components.length; i++) {
     component.on('add:' + components[i], privates.addToDeferred, options);
     component.on('remove:' + components[i], privates.addToDeferred, options);
+  }
+}
+
+function systemDisableSystems(self, systems) {
+  for (var i = 0; i < systems.length; i++) {
+    system.disable(systems[i]);
   }
 }
 

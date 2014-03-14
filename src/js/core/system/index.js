@@ -19,13 +19,21 @@ system._list = [];
 
 system._listLength = 0;
 
-
-system.define = function systemDefine(name, definition, components, context) {
+/**
+ * Function which check if the entity parameter is valid for this system
+ *
+ * If No : return false
+ *
+ * If Yes : add the entity to the entities list of the system, and return true
+ *
+ * @param {number} entity The entity to add
+ */
+system.define = function systemDefine(name, definition, components, options) {
   if (name in system._definitions) {
     throw new Error();
   }
 
-  var systemDefinition = new SystemDefinition(name, definition, components, context);
+  var systemDefinition = new SystemDefinition(name, definition, components, options);
 
   system._definitions[name] = systemDefinition;
   system._list.push(name);
@@ -48,9 +56,17 @@ function systemsPriorityComparator(a, b) {
 }
 
 system.run = function systemRun() {
+  system.trigger('before running', system._list);
   for (var x = 0; x < system._listLength; x++) {
     system(system._list[x]).run();
   }
+  system.trigger('after running', system._list);
+};
+
+system.disable = function systemDisable(name) {
+  var index = system._list.indexOf(name);
+  system._list.splice(index, 1);
+  system._listLength--;
 };
 
 module.exports = system;

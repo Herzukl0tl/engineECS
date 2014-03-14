@@ -2,7 +2,8 @@
 
 var EventEmitter = require('../../../../lib/js/events-emitter.min'),
   EntityDefinition = require('./definition'),
-  nextEntityId = 0;
+  nextEntityId = 0,
+  entityList = Object.create(null);
 
 
 function entity(name) {
@@ -14,6 +15,10 @@ function entity(name) {
 }
 
 EventEmitter.mixins(entity);
+
+entity.on('create new entity', function (id, factory) {
+  entityList[id] = factory;
+});
 
 entity._definitions = Object.create(null);
 
@@ -33,5 +38,16 @@ entity.define = function entityDefine(name, source) {
   return entityDefinition;
 };
 
+entity.serialize = function entitySerialize(id) {
+  var factory = entityList[id];
+  return entity(factory).serialize(id);
+};
+
+entity.unSerialize = function entityUnSerialize(serialized) {
+  var data = JSON.parse(serialized);
+  var factory = data.factory;
+
+  return entity(factory).unSerialize(data);
+};
 
 module.exports = entity;
