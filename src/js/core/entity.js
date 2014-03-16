@@ -1,12 +1,16 @@
 'use strict';
 
-var component = require('../component'),
-  entity;
+var EntityIdGenerator, entityIdGenerator;
+
+EntityIdGenerator = require('./entity-id-generator.js');
+entityIdGenerator = new EntityIdGenerator();
 
 
-function EntityDefinition(name, source) {
+function EntityDefinition(name, module, source) {
   this.name = name;
   this.definition = null;
+
+  this._module = module;
 
   this._source = source;
   this._components = [];
@@ -17,13 +21,11 @@ function EntityDefinition(name, source) {
   this._defaultsHaveChanged = true;
 
   this._entities = [];
-
-  if (entity === undefined) entity = require('../entity');
 }
 
 
 EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
-  var id = entity.next();
+  var id = entityIdGenerator.next();
 
   if (this._sourceHasChanged) {
     this.compile();
@@ -32,11 +34,11 @@ EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
   this.definition(id);
 
   for (var key in options) {
-    if (!(component(key). in (id))) {
+    if (!(this._module.component(key).in(id))) {
       continue;
     }
 
-    var root = component(key).of(id),
+    var root = this._module.component(key).of(id),
       paths = options[key];
 
     for (var path in paths) {
@@ -53,7 +55,8 @@ EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
   }
 
   this._entities.push(id);
-  entity.trigger('create:' + this.name, id);
+  this._module.trigger('create:entity:' + this.name, id);
+
   return id;
 };
 
@@ -61,7 +64,7 @@ EntityDefinition.prototype.destroy = function EntityDefinitionDestroy(id) {
   var components = this.components();
 
   for (var i = components.length - 1; i >= 0; i -= 1) {
-    component(components[i]).remove(id);
+    this._module.component(components[i]).remove(id);
   }
 
   for (var j = this._entities.length - 1; j >= 0; j -= 1) {
@@ -71,7 +74,7 @@ EntityDefinition.prototype.destroy = function EntityDefinitionDestroy(id) {
     }
   }
 
-  entity.trigger('remove:' + this.name, id);
+  this._module.trigger('remove:entity:' + this.name, id);
 
   return this;
 };
@@ -200,6 +203,7 @@ EntityDefinition.prototype.compile = function EntityDefinitionCompile() {
       tail = '  ' + identifier + '.' + path + ' = ' + JSON.stringify(paths[path]) + ';\n' + tail;
     }
   }
+
   if (identifiers.length > 0) {
     head += '  var ' + identifiers.join(', ') + ';\n';
   }
@@ -213,11 +217,11 @@ EntityDefinition.prototype.compile = function EntityDefinitionCompile() {
       head += scope[components[i]] + ' = ';
     }
 
-    head += 'component("' + components[i] + '").add($id);\n';
+    head += 'module.component("' + components[i] + '").add($id);\n';
   }
 
   head += '\n';
-  this.definition = new Function('component', head + tail)(component);
+  this.definition = new Function('module', head + tail)(this._module);
 
   this._sourceHasChanged = false;
 };
@@ -234,7 +238,7 @@ function expandSourceProperty(self, property, scope, keys) {
 
   while (stack.length > 0) {
     var current = stack.shift(),
-      source = entity(current)._source;
+      source = self._module.entity(current)._source;
 
     if (current in scope) {
       continue;

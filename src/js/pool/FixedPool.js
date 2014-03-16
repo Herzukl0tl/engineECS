@@ -1,6 +1,8 @@
 'use strict';
 
 function FixedPool(factory, options) {
+  var i;
+
   this._pool = [];
 
   this._defered = [];
@@ -12,39 +14,45 @@ function FixedPool(factory, options) {
     this._size = FixedPool.defaults.size;
   }
 
-  for (var i = 0; i < this._size; i += 1) {
+  for (i = 0; i < this._size; i += 1) {
     this._pool.push(factory());
   }
 }
 
 
 FixedPool.prototype.create = function FixedPoolCreate() {
+  var instance;
+
   if (this._size > 0) {
-    var object = this._pool[--this._size];
+    instance = this._pool[--this._size];
 
     this._pool[this._size] = null;
 
-    return object;
+    return instance;
   }
 };
 
 FixedPool.prototype.defer = function FixedPoolDefer(callback) {
+  var instance;
+
   if (this._size > 0) {
-    var object = this._pool[--this._size];
+    instance = this._pool[--this._size];
 
     this._pool[this._size] = null;
 
-    callback(object);
+    setTimeout(function () {
+      callback(instance);
+    }, 0);
   } else {
     this._defered.push(callback);
   }
 };
 
-FixedPool.prototype.release = function FixedPoolRelease(object) {
+FixedPool.prototype.release = function FixedPoolRelease(instance) {
   if (this._defered.length > 0) {
-    this._defered.shift()(object);
+    this._defered.shift()(instance);
   } else {
-    this._pool[this._size++] = object;
+    this._pool[this._size++] = instance;
   }
 };
 

@@ -1,14 +1,12 @@
 'use strict';
 
-var system;
-var component = require('../component'),
-  privates = Object.create(null),
-  eventsOptions = {};
 
-function SystemDefinition(name, components, definition) {
+function SystemDefinition(name, module, components, definition) {
   this.name = name;
   this.definition = definition;
   this.components = components;
+
+  this._module = module;
 
   this._context = Object.create(null);
 
@@ -20,9 +18,18 @@ function SystemDefinition(name, components, definition) {
   this._priority = 0;
 
   systemListenComponents(this, components);
-
-  if (system === undefined) system = require('../system');
 }
+
+SystemDefinition.prototype.priority = function SystemDefinitionPriority(value) {
+  if (arguments.length === 0) {
+    return this._priority;
+  }
+
+  this._priority = value;
+  this._module.sortSystemsByPriority();
+
+  return this;
+};
 
 /**
  * Function which check if the entity parameter is valid for this system
@@ -59,7 +66,7 @@ SystemDefinition.prototype.remove = function SystemDefinitionRemove(entity) {
 SystemDefinition.prototype.check = function SystemDefinitionCheck(entity) {
   var componentPack = Object.create(null);
   for (var i = this.components.length - 1; i >= 0; i--) {
-    var comp = component(this.components[i]).of(entity);
+    var comp = this._module.component(this.components[i]).of(entity);
     if (comp === undefined) return null;
     componentPack[this.components[i]] = comp;
   }
@@ -71,13 +78,13 @@ SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentP
   systemParseDeferred(this);
 
   if (arguments.length === 2) {
-    system.trigger('before:' + this.name, entity, componentPack);
+    this._module.trigger('before:' + this.name, entity, componentPack);
 
     systemDefinitionRunEntity(this, entity, componentPack);
 
-    system.trigger('after:' + this.name, entity, componentPack);
+    this._module.trigger('after:' + this.name, entity, componentPack);
   } else {
-    system.trigger('before:' + this.name, this.entities, this._componentPacks);
+    this._module.trigger('before:' + this.name, this.entities, this._componentPacks);
 
     if (this._autosortComparator !== null) {
       this.entities.sort(this._autosortComparator);
@@ -89,7 +96,7 @@ SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentP
       systemDefinitionRunEntity(this, this.entities[i], this._componentPacks[this.entities[i]]);
     }
 
-    system.trigger('after:' + this.name, this.entities, this._componentPacks);
+    this._module.trigger('after:' + this.name, this.entities, this._componentPacks);
   }
 
   return this;
@@ -145,20 +152,20 @@ function systemParseDeferred(self) {
   self._deferredEntities.length = 0;
 }
 
-privates.addToDeferred = function systemAddToDeferred(entity, componentName) {
+function systemAddToDeferred(entity, componentName) {
+  /*jshint validthis:true */
   this._deferredEntities.push(entity);
   if (componentName !== undefined) this._removeEntities[entity] = componentName;
-};
+}
 
 function systemListenComponents(self, components) {
-  var options = eventsOptions;
-
-  options.context = self;
+  var options = {context: self};
 
   for (var i = 0; i < components.length; i++) {
-    component.on('add:' + components[i], privates.addToDeferred, options);
-    component.on('remove:' + components[i], privates.addToDeferred, options);
+    self._module.on('create:component:' + components[i], systemAddToDeferred, options);
+    self._module.on('destroy:component:' + components[i], systemAddToDeferred, options);
   }
 }
+
 
 module.exports = SystemDefinition;

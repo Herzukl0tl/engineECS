@@ -1,8 +1,8 @@
 'use strict';
 
-window.component = require('./core/component');
-window.system = require('./core/system');
-window.entity = require('./core/entity');
+window.nuclear = require('nuclear');
+
+require('./modules/watchers')(window.nuclear);
 
 window.Pool = require('./pool').Pool;
 window.FixedPool = require('./pool').FixedPool;

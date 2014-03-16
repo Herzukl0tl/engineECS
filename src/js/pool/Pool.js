@@ -38,24 +38,33 @@ Pool.prototype.create = function PoolCreate() {
 };
 
 Pool.prototype.defer = function PoolDefer(callback) {
+  var instance;
+
   if (this._pool.length > 0) {
-    callback(this._pool.pop());
+    instance = this._pool.pop();
+    setTimeout(function () {
+      callback(instance);
+    }, 0);
   } else {
     this._defered.push(callback);
   }
 };
 
 Pool.prototype.allocate = function PoolAllocate(count) {
-  for (var i = 0; i < count; i += 1) {
+  var i;
+
+  for (i = 0; i < count; i += 1) {
     this._pool.push(this._factory());
   }
+
+  this._size += count;
 };
 
-Pool.prototype.release = function PoolRelease(object) {
+Pool.prototype.release = function PoolRelease(instance) {
   if (this._defered.length > 0) {
-    this._defered.shift()(object);
+    this._defered.shift()(instance);
   } else {
-    this._pool.push(object);
+    this._pool.push(instance);
   }
 };
 
