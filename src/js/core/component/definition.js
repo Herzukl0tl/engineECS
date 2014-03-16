@@ -59,9 +59,11 @@ ComponentDefinition.prototype.share = function ComponentDefinitionShare(source, 
   if (Array.isArray(dest)) {
     for (var i = dest.length - 1; i >= 0; i -= 1) {
       this._components[dest[i]] = component;
+      cmp.trigger('add:' + this.name, dest[i], this.name);
     }
   } else {
     this._components[dest] = component;
+    cmp.trigger('add:' + this.name, dest, this.name);
   }
 
   return component;
