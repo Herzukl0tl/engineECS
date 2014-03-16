@@ -2,6 +2,7 @@
 
 var system;
 var component = require('../component'),
+  scene = require('../scene'),
   Scheduler = require('../../scheduler/scheduler'),
   privates = Object.create(null),
   eventsOptions = {};
@@ -69,8 +70,7 @@ SystemDefinition.prototype.add = function SystemDefinitionAdd(entity) {
 };
 
 SystemDefinition.prototype.remove = function SystemDefinitionRemove(entity) {
-  var index = this.entities.indexOf(entity);
-
+  var index = this.entities.indexOf(parseInt(entity));
   if (index < 0) return false;
 
   this.entities.splice(index, 1);
@@ -153,13 +153,15 @@ SystemDefinition.prototype.refresh = function SystemDefinitionRefresh() {
 
 function systemDefinitionRunEntity(self, entity, componentPack) {
   var context = self._context,
-    components = self.components;
+    components = self.components,
+    sceneContext = scene(scene.of(entity))._context;
 
   for (var i = components.length - 1; i >= 0; i--) {
     context[components[i]] = componentPack[components[i]];
   }
 
-  self.definition.call(context, entity);
+
+  self.definition.call(context, entity, sceneContext);
 }
 
 function systemParseDeferred(self) {

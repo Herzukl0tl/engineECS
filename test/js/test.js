@@ -1,11 +1,13 @@
 (function(){
-    system.define('kinematic', ['position', 'velocity'], function () {
-        this.position.x += this.velocity.x;
-        this.position.y += this.velocity.y;
-    });
+    var canvas;
 
-    system.define('privateRender', ['position', 'size', 'render'], function () {
-        var context = this.render.context;
+    // system.define('kinematic', ['position', 'velocity'], function () {
+    //     this.position.x += this.velocity.x;
+    //     this.position.y += this.velocity.y;
+    // });
+
+    system.define('privateRender', ['position', 'size', 'render'], function (entity, scene) {
+        var context = scene.context;
         context.fillStyle = this.render.color;
         context.fillRect(this.position.x, this.position.y, this.size.width, this.size.height)
     }, {msPerUpdate : 16, strict : false});
@@ -38,31 +40,31 @@
     });
 
     component.define('render', function (id, data) {
-        var render = {
-            context : data.context || 0, color : data.color || 'black'
+        return {
+            color : data.color || 'black'
         };
-        render.toJSON = function(){
-          var self = this;
-          return {
-            color : self.color,
-            layer : self.layer
-          }
-        }
-        return render;
     });
 
     entity.define('box', {
-       components : ['position', 'size', 'render', 'velocity', 'layer']
+       components : ['position', 'size', 'velocity', 'layer']
     });
+    scene.define('background', function(){
+        var background = entity('box').create({
+            size : {
+                width : 800,
+                height : 600
+            }
+        });
 
-    var canvas = document.getElementById('canvas');
-
-    for(var i = 0; i < 100; i++){
+        component('render').add(background, {
+            color : 'green'
+        });
+        // component('watcher').add(background).watch('render.color', function (value, old) {
+        //     //console.log('changed background color from ' + old + ' to ' + value);
+        // });
+    });
+    scene.define('test', function(){
         var box = entity('box').create({
-            render : {
-                context : canvas.getContext('2d'),
-                color : 'blue'
-            },
             layer : {
                 layer : 1,
                 systems : ['render']
@@ -80,40 +82,59 @@
                 y : Math.random()-Math.random()
             }
         });
-    
-        component('watcher').add(box).watch('position.x', function (value, old) {
-          //console.log('changed box x position from ' + value + ' to ' + old);
+        component('render').add(box, {
+            color : 'blue'
         });
-    }
-
-    var background = entity('box').create({
-        render : {
-            context : canvas.getContext('2d'),
-            color : 'green'
-        },
-        size : {
-            width : 800,
-            height : 600
+        for(var i = 0; i < 100; i++){
+            var next = entity('box').create({
+                layer : {
+                    layer : 1,
+                    systems : ['render']
+                },
+                size : {
+                    width : 50,
+                    height : 50
+                },
+                position : {
+                    x : 100,
+                    y : 100
+                },
+                velocity : {
+                    x : Math.random()-Math.random(),
+                    y : Math.random()-Math.random()
+                }
+            });
+            component('render').share(box, next);
+            // component('watcher').add(box).watch('position.x', function (value, old) {
+            //   //console.log('changed box x position from ' + value + ' to ' + old);
+            // });
         }
+        scene('background').instanciate(this);
+        // var serialized = entity.serialize(background);
+        // var newEntity = entity.unSerialize(serialized);
+        // console.log(serialized);
+        // console.log(newEntity);
+        // console.log(entity.serialize(newEntity));
+
+        // system.on('before:render', function() {
+        //     //canvas.getContext('2d').clearRect(0,0,800,600);
+        // });
+
+        // system.on('after:render', function(){
+        //     //console.log('after render');
+        // });
     });
 
-    component('watcher').add(background).watch('render.color', function (value, old) {
-        //console.log('changed background color from ' + old + ' to ' + value);
+    scene.define('launch', function(){
+        canvas = document.getElementById('canvas');
+        var context = {
+            context : canvas.getContext('2d')
+        };
+        scene('test').instanciate(context);
+        scene('test').instanciate(context);
     });
 
-    // var serialized = entity.serialize(background);
-    // var newEntity = entity.unSerialize(serialized);
-    // console.log(serialized);
-    // console.log(newEntity);
-    // console.log(entity.serialize(newEntity));
-
-    system.on('before:render', function() {
-        //canvas.getContext('2d').clearRect(0,0,800,600);
-    });
-
-    system.on('after:render', function(){
-        //console.log('after render');
-    });
+    scene('launch').instanciate();
     function run(){
         system.run();
         requestAnimationFrame(run);

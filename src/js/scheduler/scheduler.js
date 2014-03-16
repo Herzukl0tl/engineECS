@@ -18,8 +18,7 @@ function Scheduler(msPerUpdate, strict, extrapolation) {
 
 
 Scheduler.prototype.run = function schedulerRun(callback) {
-  var time = new Date();
-  var current = time.getTime();
+  var current = Date.now();
   var elapsed = current - this.previous;
   this.previous = current;
   this.lag += elapsed;
