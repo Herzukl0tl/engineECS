@@ -78,13 +78,13 @@ SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentP
   systemParseDeferred(this);
 
   if (arguments.length === 2) {
-    this._module.trigger('before:' + this.name, entity, componentPack);
+    this._module.events.trigger('before:' + this.name, entity, componentPack);
 
     systemDefinitionRunEntity(this, entity, componentPack);
 
-    this._module.trigger('after:' + this.name, entity, componentPack);
+    this._module.events.trigger('after:' + this.name, entity, componentPack);
   } else {
-    this._module.trigger('before:' + this.name, this.entities, this._componentPacks);
+    this._module.events.trigger('before:' + this.name, this.entities, this._componentPacks);
 
     if (this._autosortComparator !== null) {
       this.entities.sort(this._autosortComparator);
@@ -96,7 +96,7 @@ SystemDefinition.prototype.run = function SystemDefinitionRun(entity, componentP
       systemDefinitionRunEntity(this, this.entities[i], this._componentPacks[this.entities[i]]);
     }
 
-    this._module.trigger('after:' + this.name, this.entities, this._componentPacks);
+    this._module.events.trigger('after:' + this.name, this.entities, this._componentPacks);
   }
 
   return this;

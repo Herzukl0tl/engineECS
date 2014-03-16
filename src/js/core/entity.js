@@ -55,7 +55,7 @@ EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
   }
 
   this._entities.push(id);
-  this._module.trigger('create:entity:' + this.name, id);
+  this._module.events.trigger('create:entity:' + this.name, id);
 
   return id;
 };
@@ -74,7 +74,7 @@ EntityDefinition.prototype.destroy = function EntityDefinitionDestroy(id) {
     }
   }
 
-  this._module.trigger('remove:entity:' + this.name, id);
+  this._module.events.trigger('remove:entity:' + this.name, id);
 
   return this;
 };

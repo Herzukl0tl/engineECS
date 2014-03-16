@@ -34,7 +34,7 @@ ComponentDefinition.prototype.add = function ComponentDefinitionAdd(entity) {
 
   this._components[entity] = component;
 
-  this._module.trigger('create:component:' + this.name, entity);
+  this._module.events.trigger('create:component:' + this.name, entity);
 
   return component;
 };
@@ -44,7 +44,7 @@ ComponentDefinition.prototype.remove = function ComponentDefinitionRemove(entity
 
   delete this._components[entity];
 
-  this._module.trigger('destroy:component' + this.name, entity, this.name);
+  this._module.events.trigger('destroy:component' + this.name, entity, this.name);
 
   return true;
 };

@@ -19,6 +19,8 @@ systemsPriorityComparatorsDescriptor = {
 function Module(name) {
   this.name = name.trim();
 
+  this.events = new EventsEmitter();
+
   this._config = {
     verbose: true
   };
@@ -31,8 +33,6 @@ function Module(name) {
 
   this._systemsByPriority = [];
 }
-
-EventsEmitter.mixins(Module.prototype);
 
 Module.prototype.config = function config(options) {
   if (arguments.length === 0) {
