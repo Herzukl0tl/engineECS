@@ -7,6 +7,6 @@ module.exports = {
 
   dist: {
     src: '<%= browserify.dist.dest %>',
-    dest: 'dist/js/ecs.min.js'
+    dest: 'dist/js/<%= package.name %>.min.js'
   }
 };
