@@ -11,6 +11,3 @@ module.exports = function (nuclear) {
   return watchers;
 };
 
-var test = nuclear.module('test')
-  .use()
-
