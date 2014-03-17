@@ -7,6 +7,6 @@ module.exports = {
 
   dist: {
     src: 'src/dart/*.dart',
-    dest: 'dist/dart/ecs.dart.js',
+    dest: 'dist/dart/<%= package.name %>.dart.js',
   }
 };

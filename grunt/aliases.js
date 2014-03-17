@@ -2,7 +2,7 @@
 
 module.exports = function (grunt) {
   return {
-    'lint:config': ['newer:jshint:config', 'newer:jsbeautifier:config'],
+    'lint:config': ['newer:jshint:config'],
     'lint:js': ['newer:jshint:dist'],
     'lint:dart': [],
 
