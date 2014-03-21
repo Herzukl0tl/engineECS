@@ -4,6 +4,11 @@ var entity = require('../entity'),
   currentIndex = 0,
   scene;
 
+/**
+ * The SceneDefinition constructor
+ * @param {string} name       The SceneDefinition name
+ * @param {function} definition The SceneDefinition definition
+ */
 function SceneDefinition(name, definition) {
   this.name = name;
   this.definition = definition;
@@ -15,6 +20,10 @@ function SceneDefinition(name, definition) {
   if (scene === undefined) scene = require('../scene');
 }
 
+/**
+ * Run the SceneDefinition definition with the given context
+ * @param  {object} context The context to give to the scene
+ */
 SceneDefinition.prototype.instanciate = function SceneDefinitionInstantiate(context) {
   this._eventObject.context = this;
   var listener = entity.on('create_entity', privates.addEntity, this._eventObject);
@@ -30,6 +39,9 @@ SceneDefinition.prototype.instanciate = function SceneDefinitionInstantiate(cont
   entity.off(listener);
 };
 
+/**
+ * Destroy all the entities binded to this SceneDefinition
+ */
 SceneDefinition.prototype.destroy = function SceneDefinitionDestroy() {
   for (var i in this._entities) {
     entity.remove(i);

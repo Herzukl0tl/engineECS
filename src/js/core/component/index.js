@@ -5,7 +5,12 @@ var EventEmitter = require('../../../../lib/js/events-emitter.min'),
   entityList = Object.create(null),
   eventsOptions = {};
 
-
+/**
+ * The component method which contains all components definition
+ * This is also the components definition getter (throws an error if the ComponentDefinition doesn't exist)
+ * @param  {string} name The ComponentDefinition name
+ * @return {object}      The selected ComponentDefinition
+ */
 function component(name) {
   if (name in component._definitions) {
     return component._definitions[name];
@@ -18,6 +23,12 @@ EventEmitter.mixins(component);
 
 component._definitions = Object.create(null);
 
+/**
+ * Define a ComponentDefinition (throws an error if the ComponentDefinition already exists)
+ * @param  {string} name       The ComponentDefinition name
+ * @param  {function} definition The ComponentDefinition definition
+ * @return {[type]}            [description]
+ */
 component.define = function componentDefine(name, definition) {
   if (name in component._definitions) {
     throw new Error();
@@ -36,6 +47,11 @@ component.define = function componentDefine(name, definition) {
   return componentDefinition;
 };
 
+/**
+ * Get all the selected entity components
+ * @param  {number} id The selected entity
+ * @return {array}    A simple string array containing all the components names of the selected entity
+ */
 component.of = function componentOf(id) {
   if (entityList[id]) return entityList[id];
 

@@ -7,6 +7,13 @@ var component = require('../component'),
   privates = Object.create(null),
   eventsOptions = {};
 
+/**
+ * The SystemDefinition constructor
+ * @param {string} name       The SystemDefinition name
+ * @param {array} components The SystemDefinition required components
+ * @param {function} definition The SystemDefinition definition
+ * @param {object} options    The SystemDefinition options
+ */
 function SystemDefinition(name, components, definition, options) {
   if (Object.prototype.toString.call(options) !== '[object Object]') options = Object.create(null);
 
@@ -49,12 +56,9 @@ function SystemDefinition(name, components, definition, options) {
 }
 
 /**
- * Function which check if the entity parameter is valid for this system
- *
+ * Check if the entity parameter is valid for this system
  * If No : return false
- *
  * If Yes : add the entity to the entities list of the system, and return true
- *
  * @param {number} entity The entity to add
  */
 SystemDefinition.prototype.add = function SystemDefinitionAdd(entity) {
@@ -69,6 +73,11 @@ SystemDefinition.prototype.add = function SystemDefinitionAdd(entity) {
   return true;
 };
 
+/**
+ * Remove the selected entity frome the system garbage list
+ * @param  {number} entity The selected entity
+ * @return {boolean}        If the entity is in the system, it returns true, in other case, it returns false
+ */
 SystemDefinition.prototype.remove = function SystemDefinitionRemove(entity) {
   var index = this.entities.indexOf(parseInt(entity));
   if (index < 0) return false;
@@ -79,6 +88,11 @@ SystemDefinition.prototype.remove = function SystemDefinitionRemove(entity) {
   return true;
 };
 
+/**
+ * Check if an entity is runnable by the system
+ * @param  {number} entity The selected entity
+ * @return {null/object}   Return null if the entity isn't runnable, return its components in other case
+ */
 SystemDefinition.prototype.check = function SystemDefinitionCheck(entity) {
   var componentPack = Object.create(null);
   for (var i = this.components.length - 1; i >= 0; i--) {
@@ -90,6 +104,11 @@ SystemDefinition.prototype.check = function SystemDefinitionCheck(entity) {
   return componentPack;
 };
 
+/**
+ * Run the system on the selected entity, or on all the entities if no arguments
+ * @param  {number} entity The selected entity
+ * @return {SystemDefinition} Return the SystemDefinition itself
+ */
 SystemDefinition.prototype.run = function SystemDefinitionRun(entity) {
   var self = this;
   systemParseDeferred(self);
@@ -126,6 +145,11 @@ SystemDefinition.prototype.run = function SystemDefinitionRun(entity) {
   return self;
 };
 
+/**
+ * Sort the internal entity list of the system
+ * @param  {function} comparator The sorting function
+ * @return {SystemDefinition}    The SystemDefinition itself
+ */
 SystemDefinition.prototype.sort = function SystemDefinitionSort(comparator) {
   this._sorterManager.comparator = comparator;
   this._sorterManager.toDeferred = true;
@@ -133,6 +157,12 @@ SystemDefinition.prototype.sort = function SystemDefinitionSort(comparator) {
   return this;
 };
 
+/**
+ * Define an autosort compartor which will sort the SystemDefinition
+ * at each frame
+ * @param  {function} comparator The sorting function
+ * @return {SystemDefinition}    The SystemDefinition itself
+ */
 SystemDefinition.prototype.autosort = function SystemDefinitionAutoSort(comparator) {
   if (arguments.length === 0) {
     return this._autosortComparator;
@@ -147,6 +177,9 @@ SystemDefinition.prototype.autosort = function SystemDefinitionAutoSort(comparat
   throw new Error();
 };
 
+/**
+ * Refresh the system entities list
+ */
 SystemDefinition.prototype.refresh = function SystemDefinitionRefresh() {
   systemParseDeferred(this);
 };

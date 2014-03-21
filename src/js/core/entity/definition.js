@@ -3,7 +3,11 @@
 var component = require('../component'),
   entity;
 
-
+/**
+ * The EntityDefinition constructor
+ * @param {string} name   The EntityDefinition name
+ * @param {Object} source The EntityDefinition config
+ */
 function EntityDefinition(name, source) {
   this.name = name;
   this.definition = null;
@@ -21,7 +25,11 @@ function EntityDefinition(name, source) {
   if (entity === undefined) entity = require('../entity');
 }
 
-
+/**
+ * Create an entity depending on this EntityDefinition
+ * @param  {object} options All the components data
+ * @return {number}         The created entity
+ */
 EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
   var id = entity.next();
 
@@ -58,6 +66,11 @@ EntityDefinition.prototype.create = function EntityDefinitionCreate(options) {
   return id;
 };
 
+/**
+ * Change the current source
+ * @param  {[type]} value [description]
+ * @return {[type]}       [description]
+ */
 EntityDefinition.prototype.source = function EntityDefinitionSource(value) {
   if (arguments.length === 0) {
     return this._source;
@@ -85,6 +98,10 @@ EntityDefinition.prototype.source = function EntityDefinitionSource(value) {
   return this;
 };
 
+/**
+ * Compute and get the EntityDefinition components
+ * @return {object} The EntityDefinition components
+ */
 EntityDefinition.prototype.components = function EntityDefinitionComponents() {
   if (this._componentsHaveChanged) {
     var scope = Object.create(null),
@@ -204,6 +221,11 @@ EntityDefinition.prototype.compile = function EntityDefinitionCompile() {
   this._sourceHasChanged = false;
 };
 
+/**
+ * Serialize the selected entity
+ * @param  {number} entity The selected entity
+ * @return {string}        The serialized entity
+ */
 EntityDefinition.prototype.serialize = function EntityDefinitionSerialize(entity) {
   if (this._entities.indexOf(entity) <= -1) return null;
 
@@ -237,6 +259,11 @@ EntityDefinition.prototype.serialize = function EntityDefinitionSerialize(entity
   return JSON.stringify(serialized);
 };
 
+/**
+ * Deserialize a serialized entity
+ * @param  {string} components The serialized entity
+ * @return {number}            The created entity
+ */
 EntityDefinition.prototype.deSerialize = function EntityDefinitionDeSerialize(components) {
   var entity = this.create(components.options);
   for (var i in components.addedComponents) {

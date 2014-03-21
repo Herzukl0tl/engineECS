@@ -1,26 +1,32 @@
 (function(){
     var canvas;
 
-    // system.define('kinematic', ['position', 'velocity'], function () {
-    //     this.position.x += this.velocity.x;
-    //     this.position.y += this.velocity.y;
-    // });
-
+    //Defining a system, with its components dependencies, its running function,
+    //and its scheduler configuration.  
+    //The system is called privateRender becaus it will never run alone.  
+    //It's a subsystem which will be launched by an other.
     system.define('privateRender', ['position', 'size', 'render'], function (entity, scene) {
         var context = scene.context;
         context.fillStyle = this.render.color;
         context.fillRect(this.position.x, this.position.y, this.size.width, this.size.height)
     }, {msPerUpdate : 16, strict : false});
 
+    //The render system is the only render system to run.  
+    //It launch all the other privates render systems;  
+    //Defining it disable the existing 'privateRender' system, in the config.  
     system.define('render', ['position', 'size', 'render', 'layer'], function (entity) {
        system('privateRender').run(entity);
     }, {msPerUpdate : 16, strict : false, disable : ['privateRender']});
 
+
+    //This system enable the scheduler extrapolation.  
+    //It means it needs the 'this._deltaTime' to extrapolate its computing.
     system.define("movement", ["position", "velocity"], function (){
         this.position.x += this.velocity.x*this._deltaTime;
         this.position.y += this.velocity.y*this._deltaTime;
     }, {msPerUpdate : 16, strict : true, extrapolation : true});
 
+    //Defining a basic component.
     component.define('position', function (id, data) {
         return {
             x : data.x || 0, y : data.y || 0
@@ -39,16 +45,21 @@
         };
     });
 
+    //The component render has no 'context' key because the drawing context depends on the scene.
     component.define('render', function (id, data) {
         return {
             color : data.color || 'black'
         };
     });
 
+    //Defining a basic entity owning 4 components
     entity.define('box', {
        components : ['position', 'size', 'velocity', 'layer']
     });
+
+    //Defining a scene
     scene.define('background', function(){
+        //Creating an entity from 'box' factory.
         var background = entity('box').create({
             size : {
                 width : 800,
@@ -59,10 +70,16 @@
         component('render').add(background, {
             color : 'green'
         });
-        // component('watcher').add(background).watch('render.color', function (value, old) {
-        //     //console.log('changed background color from ' + old + ' to ' + value);
-        // });
+
+        //Adding a core component : the watcher-component.  
+        //It has a particular API.  
+        //It can observe one or several components keys of the attached entity and call the 
+        //associated callback.
+        component('watcher').add(background).watch('render.color', function (value, old) {
+            console.log('changed background color from ' + old + ' to ' + value);
+        });
     });
+
     scene.define('test', function(){
         var box = entity('box').create({
             layer : {
@@ -105,26 +122,22 @@
                 }
             });
             component('render').share(box, next);
-            // component('watcher').add(box).watch('position.x', function (value, old) {
-            //   //console.log('changed box x position from ' + value + ' to ' + old);
-            // });
         }
+        //Instanciating the 'background' scene with the same context as the 'test' scene.
         scene('background').instanciate(this);
-        // var serialized = entity.serialize(background);
-        // var newEntity = entity.unSerialize(serialized);
-        // console.log(serialized);
-        // console.log(newEntity);
-        // console.log(entity.serialize(newEntity));
 
-        // system.on('before:render', function() {
-        //     //canvas.getContext('2d').clearRect(0,0,800,600);
-        // });
+        //Listening a particular system running events (before and after).
+        system.on('before:render', function() {
+            console.log('before render');
+        });
 
-        // system.on('after:render', function(){
-        //     //console.log('after render');
-        // });
+        system.on('after:render', function(){
+            console.log('after render');
+        });
     });
 
+    //Defining the launch scene.  
+    //It instanciates the 'test' scene twice with the same context object.  
     scene.define('launch', function(){
         canvas = document.getElementById('canvas');
         var context = {
@@ -136,6 +149,7 @@
 
     scene('launch').instanciate();
     function run(){
+        //Running all the defined systems
         system.run();
         requestAnimationFrame(run);
     }
