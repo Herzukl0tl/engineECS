@@ -4,12 +4,11 @@
   "description": "A game engine from the future",
   "main": "dist/js/nuclear.min.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "grunt githooks"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Herzukl0tl/engineECS.git"
+    "url": "https://github.com/Herzukl0tl/nuclear.js.git"
   },
   "keywords": [
     "game",
@@ -23,37 +22,37 @@
   "author": "herzukl0tl",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Herzukl0tl/engineECS/issues"
+    "url": "https://github.com/Herzukl0tl/nuclear.js/issues"
   },
-  "homepage": "https://github.com/Herzukl0tl/engineECS",
+  "homepage": "https://github.com/Herzukl0tl/nuclear.js",
   "devDependencies": {
     "browserify": "~3.20.0",
     "jshint-stylish": "~0.1.5",
-    "grunt": "~0.4.2",
-    "grunt-contrib-jshint": "~0.8.0",
-    "grunt-contrib-clean": "~0.5.0",
-    "grunt-browserify": "~2.0.0",
-    "grunt-contrib-uglify": "~0.2.7",
-    "grunt-dart2js": "0.0.5",
-    "grunt-contrib-watch": "~0.5.3",
-    "grunt-newer": "~0.6.1",
-    "grunt-concurrent": "~0.5.0",
-    "load-grunt-config": "~0.8.0-beta.1",
-    "time-grunt": "~0.2.10",
-    "grunt-bump": "0.0.13",
-    "gulp": "~3.4.1",
+    "gulp": "~3.6.0",
+    "gulp-load-plugins": "~0.5.0",
     "gulp-jshint": "~1.3.4",
-    "gulp-beautify": "~1.0.3",
     "gulp-uglify": "~0.1.0",
     "gulp-header": "~1.0.2",
     "gulp-browserify": "~0.3.2",
     "gulp-rename": "~0.2.2",
-    "gulp-dart2js": "0.0.2",
     "gulp-clean": "~0.2.3",
-    "grunt-shell": "~0.6.2",
     "gulp-exec": "~1.0.3",
-    "gulp-load-tasks": "~0.1.1",
-    "gulp-bump": "~0.1.0",
-    "gulp-jsdox-struct": "~0.2.1"
+    "gulp-jasmine": "~0.2.0",
+    "vinyl-source-stream": "~0.1.1",
+    "vinyl-buffer": "0.0.0",
+    "gulp-symlink": "~0.4.2",
+    "map-stream": "~0.1.0",
+    "grunt": "~0.4.4",
+    "grunt-browserify": "~2.0.3",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-jshint": "~0.10.0",
+    "grunt-contrib-watch": "~0.6.1",
+    "grunt-contrib-uglify": "~0.4.0",
+    "grunt-shell": "~0.6.4",
+    "grunt-concurrent": "~0.5.0",
+    "grunt-newer": "~0.7.0",
+    "time-grunt": "~0.3.1",
+    "load-grunt-config": "~0.8.0-beta.1",
+    "grunt-jasmine-node": "~0.2.1"
   }
 }

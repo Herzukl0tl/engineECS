@@ -5,12 +5,12 @@ module.exports = {
     files: ['Gruntfile.js', 'grunt/*.js'],
     tasks: ['lint:config']
   },
-  js: {
-    files: ['src/js/**/*.js'],
-    tasks: ['build:js']
+  scripts: {
+    files: ['src/**/*.js'],
+    tasks: ['build:scripts']
   },
-  dart: {
-    files: ['src/dart/**/*.dart'],
-    tasks: ['build:dart']
+  test: {
+    files: ['test/**/*.spec.js'],
+    tasks: ['test']
   }
 };

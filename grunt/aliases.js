@@ -3,22 +3,18 @@
 module.exports = function (grunt) {
   return {
     'lint:config': ['newer:jshint:config'],
-    'lint:js': ['newer:jshint:dist'],
-    'lint:dart': [],
+    'lint:scripts': ['newer:jshint:dist'],
 
     'lint': ['concurrent:lint'],
 
-    'build:js': ['lint:js', 'clean:js', 'browserify', 'uglify'],
-    'build:dart': ['lint:dart', 'clean:dart', 'dart2js'],
+    'test': ['jasmine_node'],
 
-    'build': ['concurrent:build'],
+    'build': ['lint:scripts', 'test', 'clean:scripts', 'browserify', 'uglify'],
 
-    'githooks': ['clean:githooks', 'shell:githooks'],
+    'hooks': ['clean:hooks', 'shell:hooks'],
 
     'default': function () {
-      if (grunt.option('js')) grunt.task.run('build:js', 'watch:js', 'watch:config');
-      else if (grunt.option('dart')) grunt.task.run('build:dart', 'watch:dart', 'watch:config');
-      else grunt.task.run('build', 'watch');
+      grunt.task.run('build', 'watch');
     }
   };
 };

@@ -6,6 +6,6 @@ module.exports = {
     reporter: require('jshint-stylish')
   },
 
-  dist: ['src/js/**/*.js'],
+  dist: ['src/**/*.js'],
   config: ['Gruntfile.js', 'grunt/*.js']
 };
