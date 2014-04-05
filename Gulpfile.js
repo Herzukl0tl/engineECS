@@ -8,28 +8,28 @@ var gulp = require('gulp'),
 gulp.task('beautify', function () {});
 
 gulp.task('lint:js', function () {
-  return gulp.src(['./Gulpfile.js', './src/js/**/*.js'])
+  return gulp.src(['./Gulpfile.js', './src/**/*.js'])
     .pipe(tasks.jshint('.jshintrc'))
     .pipe(tasks.jshint.reporter('jshint-stylish'));
 });
 
 gulp.task('build:js', ['lint:js'], function () {
-  return gulp.src(['./dist/js/*', '!./dist/dart/.gitignore'], {read: false})
+  return gulp.src(['./dist/*', '!./dist/dart/.gitignore'], {read: false})
     .pipe(tasks.clean())
     .on('end', function () {
-      gulp.src('./src/js/*.js')
+      gulp.src('./src/*.js')
         .pipe(tasks.browserify())
         .pipe(tasks.rename(pkg.name + '.js'))
-        //.pipe(tasks.jsdox({output : './doc/js'}))
-        .pipe(gulp.dest('./dist/js'))
+        //.pipe(tasks.jsdox({output : './doc'}))
+        .pipe(gulp.dest('./dist'))
         .pipe(tasks.uglify())
         .pipe(tasks.rename(pkg.name + '.min.js'))
-        .pipe(gulp.dest('dist/js'));
+        .pipe(gulp.dest('dist'));
     });
 });
 
 gulp.task('watch:js', function () {
-  return gulp.watch(['./Gulpfile.js', './src/js/**/*.js'], function () {
+  return gulp.watch(['./Gulpfile.js', './src/**/*.js'], function () {
     gulp.run('build:js');
   });
 });
@@ -38,31 +38,8 @@ gulp.task('default:js', ['build:js'], function () {
   gulp.run('watch:js');
 });
 
-// todo
-gulp.task('lint:dart', function () {});
-
-gulp.task('build:dart', ['lint:dart'], function () {
-  return gulp.src(['./dist/dart/*', '!./dist/dart/.gitignore'], {read: false})
-    .pipe(tasks.clean())
-    .on('end', function () {
-      // ./lib/dart-sdk/bin must be in PATH
-      gulp.src('./src/dart/*.dart')
-        .pipe(tasks.dart2js('./dist/dart/'));
-    });
-});
-
-gulp.task('watch:dart', function () {
-  return gulp.watch('./src/dart/**/*.dart', function () {
-    gulp.run('build:dart');
-  });
-});
-
-gulp.task('default:dart', ['build:dart'], function () {
-  gulp.run('watch:dart');
-});
-
 ['build', 'watch', 'lint'].forEach(function (name) {
-  gulp.task(name, [name + ':js', name + ':dart']);
+  gulp.task(name, [name + ':js']);
 });
 
 gulp.task('githooks', function () {
@@ -87,12 +64,5 @@ gulp.task('bump', function () {
 });
 
 gulp.task('default', function () {
-  if ('js' in gulp.env) gulp.run('default:js');
-  else if ('dart' in gulp.env) gulp.run('default:dart');
-  else gulp.run('default:js', 'default:dart');
+    gulp.run('default:js');
 });
-
-//gulp.task('jsdox:js', function() {
-//  gulp.src(['./src/js/**/*.js'])
-//    .pipe(tasks.jsdox({output : './doc/js', root : 'js'}));
-//});

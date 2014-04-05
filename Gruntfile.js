@@ -5,13 +5,13 @@ module.exports = function (grunt) {
     pkg: require('./package.json'),
     jsbeautifier: {
       modify: {
-        src: ['Gruntfile.js', 'src/js/**/*.js'],
+        src: ['Gruntfile.js', 'src/**/*.js'],
         options: {
           config: '.jsbeautifyrc'
         }
       },
       verify: {
-        src: ['Gruntfile.js', 'src/js/**/*.js'],
+        src: ['Gruntfile.js', 'src/**/*.js'],
         options: {
           mode: 'VERIFY_ONLY',
           config: '.jsbeautifyrc'
@@ -19,49 +19,35 @@ module.exports = function (grunt) {
       }
     },
     jshint: {
-      all: ['Gruntfile.js', 'src/js/**/*.js'],
+      all: ['Gruntfile.js', 'src/**/*.js'],
       options: {
         jshintrc: '.jshintrc',
         reporter: require('jshint-stylish')
       }
     },
     clean: {
-      js: ['dist/js/*', '!dist/js/.gitignore'],
-      dart: ['dist/dart/*', '!dist/dart/.gitignore'],
+      js: ['dist/*', '!dist/.gitignore'],
       githooks: '.git/hooks/pre-commit'
     },
     browserify: {
       all: {
-        src: 'src/js/**/*.js',
-        dest: 'dist/js/<%= pkg.name %>.js'
+        src: 'src/**/*.js',
+        dest: 'dist/<%= pkg.name %>.js'
       }
     },
     uglify: {
       all: {
         src: '<%= browserify.all.dest %>',
-        dest: 'dist/js/<%= pkg.name %>.min.js'
+        dest: 'dist/<%= pkg.name %>.min.js'
       },
       options: {
         banner: '/* <%= pkg.name %> <%= grunt.template.today("dd-mm-yyyy") %> */\n'
       }
     },
-    dart2js: {
-      all: {
-        src: 'src/dart/*.dart',
-        dest: 'dist/dart/<%= pkg.name %>.dart.js',
-      },
-      options: {
-        dart2js_bin: 'lib/dart-sdk/bin/dart2js',
-      }
-    },
     watch: {
       js: {
-        files: ['Gruntfile.js', 'src/js/**/*.js'],
+        files: ['Gruntfile.js', 'src/**/*.js'],
         tasks: ['build:js']
-      },
-      dart: {
-        files: ['src/dart/**/*.dart'],
-        tasks: ['build:dart']
       }
     },
     shell: {
@@ -76,21 +62,16 @@ module.exports = function (grunt) {
   grunt.registerTask('beautify', ['newer:jsbeautifier:modify']);
 
   grunt.registerTask('lint:js', ['newer:jsbeautifier:verify', 'newer:jshint']);
-  // todo
-  grunt.registerTask('lint:dart', []);
 
   grunt.registerTask('build:js', ['newer:jshint', 'beautify', 'clean:js', 'browserify', 'uglify']);
-  grunt.registerTask('build:dart', ['clean:dart', 'dart2js']);
 
   ['build', 'lint'].forEach(function (name) {
-    grunt.registerTask(name, [name + ':js', name + ':dart']);
+    grunt.registerTask(name, [name + ':js']);
   });
 
   grunt.registerTask('githooks', ['clean:githooks', 'shell:githooks']);
 
   grunt.registerTask('default', function () {
-    if (grunt.option('js')) grunt.task.run('build:js', 'watch:js');
-    else if (grunt.option('dart')) grunt.task.run('build:dart', 'watch:dart');
-    else grunt.task.run('build', 'watch');
+    grunt.task.run('build', 'watch');
   });
 };
