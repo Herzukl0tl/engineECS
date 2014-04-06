@@ -31,15 +31,16 @@ Module.prototype.systems = function moduleSystems() {
   return Object.keys(this._systems);
 };
 
-Module.prototype.config = function moduleConfig(options) {
-  var key;
+Module.prototype.config = function moduleConfig(config) {
+  var key, descriptor;
 
-  if (arguments.length === 0) {
-    return this._config;
+  if (typeof config === 'string') {
+    return this._config[key = config];
   }
 
-  for (key in options) {
-    this._config[key] = options[key];
+  for (key in config) {
+    descriptor = Object.getOwnPropertyDescriptor(config, key);
+    if (descriptor) Object.defineProperty(this._config, key, descriptor);
   }
 
   return this;
