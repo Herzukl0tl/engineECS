@@ -11,9 +11,11 @@ function $getter(path) {
 
   if (getter === undefined) {
     fragments = path.split('.');
-    $getter.cache[path] = getter = new Function('r', 'return function compiledGetter(e){'
-      'return r.component("' + fragments.shift() + '").of(e).' + fragments.join('.')
-    '}')(nuclearRegistry);
+    $getter.cache[path] = getter = new Function('r',
+      'return function compiledGetter(e){' +
+        'return r.component("' + fragments.shift() + '").of(e).' + fragments.join('.') +
+      '}'
+    )(nuclearRegistry);
   }
 
   return getter;
@@ -28,18 +30,17 @@ function $setter(path) {
 
   if (setter === undefined) {
     fragments = path.split('.');
-    $setter.cache[path] = setter = new Function('r', 'return function compiledSetter(e,v){'
-      'r.component("' + fragments.shift() + '").of(e).' + fragments.join('.') + '=v'
-    '}')(nuclearRegistry);
+    $setter.cache[path] = setter = new Function('r',
+      'return function compiledSetter(e,v){' +
+        'r.component("' + fragments.shift() + '").of(e).' + fragments.join('.') + '=v' +
+      '}'
+    )(nuclearRegistry);
   }
 
   return setter;
 }
 
 $setter.cache = Object.create(null);
-
-ascComparisonTemplate = '{{left}} - {{right}}';
-descComparisonTemplate =
 
 function $comparator(path, order) {
   var key, comparator, fragments, component, property, comparison;
