@@ -5,58 +5,49 @@ var rExplicitModuleNotation;
 rExplicitModuleNotation = /([^\s]+)\s+from\s+([^\s]+)/;
 
 function Registry() {
-  this._modules = Object.create(null);
-  this._components = Object.create(null);
-  this._entities = Object.create(null);
-  this._systems = Object.create(null);
+  this.modules = Object.create(null);
+  this.components = Object.create(null);
+  this.entities = Object.create(null);
+  this.systems = Object.create(null);
 }
 
-Registry.prototype.components = function registryComponents() {
-  return Object.keys(this._components);
-};
-
-Registry.prototype.entities = function registryEntities() {
-  return Object.keys(this._entities);
-};
-
-Registry.prototype.systems = function registrySystems() {
-  return Object.keys(this._systems);
-};
-
 Registry.prototype.import = function registryImport(module) {
-  var i, length, key, value;
+  var length, i, storages, storage, source, dest, key;
 
-  if (module.name in this._modules) return;
+  if (module.name in this.modules) return;
 
   length = module.requires.length;
 
   for (i = 0; i < length; i += 1) {
-    if (!(module.requires[i] in this._modules)) {
+    if (!(module.requires[i] in this.modules)) {
       throw new Error();
     }
   }
 
-  this._modules[module.name] = module;
+  this.modules[module.name] = module;
 
-  for (key in module.exports) {
-    if ((value = module.component(key))) {
-      this._components[key] = value;
-    } else if ((value = module.entity(key))) {
-      this._entities[key] = value;
-    } else if ((value = module.system(key))) {
-      this._systems[key] = value;
+  storages = ['components', 'entities', 'systems'];
+
+  for (i = 0; (storage = storages[i]); i += 1) {
+    source = module[storage];
+    dest = this[storage];
+
+    for (key in source) {
+      dest[key] = source[key];
     }
   }
 };
 
 Registry.prototype.clear = function registryClear() {
-  var storages, i, storage, key;
+  var storages, i, storage, source, key;
 
-  storages = ['_modules', '_components', '_entities', '_systems'];
+  storages = ['modules', 'components', 'entities', 'systems'];
 
-  for (i = 0; (storage = this[storages[i]]); i += 1) {
-    for (key in storage) {
-      delete storage[key];
+  for (i = 0; (storage = storages[i]); i += 1) {
+    source = this[storage];
+
+    for (key in source) {
+      delete source[key];
     }
   }
 };
@@ -64,7 +55,7 @@ Registry.prototype.clear = function registryClear() {
 Registry.prototype.module = function registryModule(name) {
   var module;
 
-  module = this._modules[name];
+  module = this.modules[name];
 
   if (module) return module;
 
@@ -78,7 +69,7 @@ Registry.prototype.component = function registryComponent(name) {
     return this.module(RegExp.$2).component(RegExp.$1);
   }
 
-  component = this._components[name];
+  component = this.components[name];
 
   if (component) return component;
 
@@ -92,7 +83,7 @@ Registry.prototype.entity = function registryEntity(name) {
     return this.module(RegExp.$2).entity(RegExp.$1);
   }
 
-  entity = this._entities[name];
+  entity = this.entities[name];
 
   if (entity) return entity;
 
@@ -106,7 +97,7 @@ Registry.prototype.system = function registrySystem(name) {
     return this.module(RegExp.$2).system(RegExp.$1);
   }
 
-  system = this._systems[name];
+  system = this.systems[name];
 
   if (system) return system;
 

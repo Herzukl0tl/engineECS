@@ -44,31 +44,22 @@ describe('Nuclear modules', function () {
     it('should define a component', function () {
       myModule.component('my-component', function () {});
 
-      expect(myModule.components()).toEqual(['my-component']);
-
       expect(myModule.component('my-component')).toEqual(jasmine.any(Component));
-      expect(myModule.exports['my-component']).toEqual(jasmine.any(Component));
-      expect(myModule.component('my-component')).toBe(myModule.exports['my-component']);
+      expect(myModule.component('my-component')).toEqual(myModule.components['my-component']);
     });
 
     it('should define an entity', function () {
       myModule.entity('my-entity', function () {});
 
-      expect(myModule.entities()).toEqual(['my-entity']);
-
       expect(myModule.entity('my-entity')).toEqual(jasmine.any(Entity));
-      expect(myModule.exports['my-entity']).toEqual(jasmine.any(Entity));
-      expect(myModule.entity('my-entity')).toBe(myModule.exports['my-entity']);
+      expect(myModule.entity('my-entity')).toBe(myModule.entities['my-entity']);
     });
 
     it('should define a system', function () {
       myModule.system('my-system', function () {});
 
-      expect(myModule.systems()).toEqual(['my-system']);
-
       expect(myModule.system('my-system')).toEqual(jasmine.any(System));
-      expect(myModule.exports['my-system']).toEqual(jasmine.any(System));
-      expect(myModule.system('my-system')).toBe(myModule.exports['my-system']);
+      expect(myModule.system('my-system')).toBe(myModule.systems['my-system']);
     });
   });
 
