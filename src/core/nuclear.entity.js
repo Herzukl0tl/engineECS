@@ -45,15 +45,15 @@ nuclearEntity.define = function nuclearEntityDefine(name, source) {
  */
 nuclearEntity.serialize = function nuclearEntitySerialize(id) {
   var serialized = Object.create(null),
-    components = component.all(entity); //change .of to .all here
+    components = nuclearComponent.all(id); //change .of to .all here
 
-  serialized.id = entity;
+  serialized.id = id;
   serialized.options = Object.create(null);
 
   for (var i = components.length - 1; i > 0; i--) {
     var name = components[i];
-    var definition = component(name);
-    var data = definition.of(entity);
+    var definition = nuclearComponent(name);
+    var data = definition.of(id);
 
     if (typeof data.toJSON === 'function') data = data.toJSON();
     serialized.options[name] = data;
@@ -68,7 +68,8 @@ nuclearEntity.serialize = function nuclearEntitySerialize(id) {
  * @return {number}            The created nuclearEntity id
  */
 nuclearEntity.deSerialize = function nuclearEntityDeSerialize(serialized) {
-  var id = nuclearEntity.create(components.options);
+  serialized = JSON.parse(serialized);
+  var id = nuclearEntity.create(serialized.options);
 
   return id;
 };
@@ -79,10 +80,10 @@ nuclearEntity.deSerialize = function nuclearEntityDeSerialize(serialized) {
  * @return {boolean}    Return true
  */
 nuclearEntity.remove = function nuclearEntityRemove(id) {
-  var components = component.of(id);
+  var components = nuclearComponent.of(id);
   
   for (var i = components.length - 1; i >= 0; i -= 1) {
-    component(components[i]).remove(id);
+    nuclearComponent(components[i]).remove(id);
   }
 
   // nuclearEntity.trigger('remove:' + factory.name, id);
@@ -92,11 +93,11 @@ nuclearEntity.remove = function nuclearEntityRemove(id) {
 nuclearEntity.create = function nuclearEntityCreate(options){
   var id = Entity.generator.next(),
       i;
-  for(var i in options){
+  for(i in options){
     nuclearComponent(i).add(id, options[i]);
   }
   
   return id;
-}
+};
 
 module.exports = nuclearEntity;

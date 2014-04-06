@@ -1,17 +1,15 @@
 'use strict';
 
-var nuclearEntityGenerator = new (require('./nuclearEntity-id-generator'))(0);
+var nuclearEntityGenerator = new (require('./entity-id-generator'))(0);
 
 /**
  * The Entity constructor
  * @param {string} name   The Entity name
  * @param {Object} source The Entity config
  */
-function Entity(name, source) {
+function Entity(name, definition) {
   this.name = name;
-  this.definition = function defaultDefinition(entity, data){
-    
-  };
+  this.definition = definition || function defaultDefinition(){};
 }
 
 Entity.generator = nuclearEntityGenerator;
