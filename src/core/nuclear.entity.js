@@ -63,7 +63,8 @@ nuclearEntity.remove = function nuclearEntityRemove(id) {
     nuclearComponent(components[i]).remove(id);
   }
 
-  emitter.trigger('entity:remove:' + factory.name, id);
+  emitter.trigger('entity:remove:' + this.name, id);
+
   return true;
 };
 
