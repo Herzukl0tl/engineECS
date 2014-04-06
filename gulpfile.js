@@ -36,7 +36,7 @@ function exitOnError() {
   });
 }
 
-gulp.task('test', ['lint:test'], function () {
+gulp.task('test', function () {
   return gulp.src(['./test/**/*.spec.js'])
     .pipe(plugins.jasmine());
 });
