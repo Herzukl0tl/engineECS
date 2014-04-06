@@ -11,32 +11,8 @@ var registry = require('./nuclear.registry'),
  * @return {object}      The selected Entity
  */
 function nuclearEntity(name) {
-  if (name in nuclearEntity._definitions) {
-    return registry.nuclearEntity(name);
-  }
-
-  throw new Error();
+  return registry.entity(name);
 }
-
-nuclearEntity._definitions = Object.create(null);
-
-/**
- * Define an Entity
- * @param  {string} name   The Entity name
- * @param  {object} source The Entity config
- * @return {Entity}        The defined Entity
- */
-nuclearEntity.define = function nuclearEntityDefine(name, source) {
-  if (name in nuclearEntity._definitions) {
-    throw new Error();
-  }
-
-  var entityDefinition = new Entity(name, source);
-
-  nuclearEntity._definitions[name] = entityDefinition;
-
-  return entityDefinition;
-};
 
 /**
  * Serialize the selected nuclearEntity
