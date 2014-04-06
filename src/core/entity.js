@@ -1,6 +1,9 @@
 'use strict';
 
-var nuclearEntityGenerator = new (require('./entity-id-generator'))(0);
+var EntityIdGenerator, entityIdGenerator;
+
+EntityIdGenerator = require('./entity-id-generator');
+entityGenerator = new EntityIdGenerator();
 
 /**
  * The Entity constructor
@@ -12,17 +15,19 @@ function Entity(name, definition) {
   this.definition = definition || function defaultDefinition(){};
 }
 
-Entity.generator = nuclearEntityGenerator;
+Entity.next = function entityNext() {
+  return entityIdGenerator.next();
+};
 
 /**
  * Create an entity depending on this Entity
  * @param  {object} options All the components data
  * @return {number}         The created entity
  */
-Entity.prototype.create = function EntityCreate(options) {
+Entity.prototype.create = function entityCreate(options) {
   var id = Entity.generator.next();
   this.definition(id, options);
-  
+
   // entity.trigger('create:' + this.name, id);
   // entity.trigger('create_entity', id, this.name);
   return id;
@@ -34,7 +39,7 @@ Entity.prototype.create = function EntityCreate(options) {
  * @param  {object} data Data to configure components
  * @return {number}            The entity to enhance
  */
-Entity.prototype.enhance = function EntityDeSerialize(entity, data) {
+Entity.prototype.enhance = function entityEnhance(entity, data) {
   this.definition(entity, data);
 
   return entity;

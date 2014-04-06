@@ -43,7 +43,7 @@ nuclearEntity.serialize = function nuclearEntitySerialize(id) {
  * @param  {string} serialized The serialized nuclearEntity
  * @return {number}            The created nuclearEntity id
  */
-nuclearEntity.deSerialize = function nuclearEntityDeSerialize(serialized) {
+nuclearEntity.deserialize = function nuclearEntityDeserialize(serialized) {
   serialized = JSON.parse(serialized);
   var id = nuclearEntity.create(serialized.options);
 
@@ -57,7 +57,7 @@ nuclearEntity.deSerialize = function nuclearEntityDeSerialize(serialized) {
  */
 nuclearEntity.remove = function nuclearEntityRemove(id) {
   var components = nuclearComponent.of(id);
-  
+
   for (var i = components.length - 1; i >= 0; i -= 1) {
     nuclearComponent(components[i]).remove(id);
   }
@@ -67,12 +67,12 @@ nuclearEntity.remove = function nuclearEntityRemove(id) {
 };
 
 nuclearEntity.create = function nuclearEntityCreate(options){
-  var id = Entity.generator.next(),
+  var id = Entity.next(),
       i;
   for(i in options){
     nuclearComponent(i).add(id, options[i]);
   }
-  
+
   return id;
 };
 
