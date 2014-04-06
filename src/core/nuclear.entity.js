@@ -2,7 +2,8 @@
 
 var registry = require('./nuclear.registry'),
     nuclearComponent = require('./nuclear.component'),
-    Entity = require('./entity');
+    Entity = require('./entity'),
+    emitter = require('./nuclear.events');
 
 /**
  * The nuclearEntity method which contains all entities definitions
@@ -62,7 +63,7 @@ nuclearEntity.remove = function nuclearEntityRemove(id) {
     nuclearComponent(components[i]).remove(id);
   }
 
-  // nuclearEntity.trigger('remove:' + factory.name, id);
+  emitter.trigger('entity:remove:' + factory.name, id);
   return true;
 };
 

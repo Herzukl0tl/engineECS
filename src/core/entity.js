@@ -1,9 +1,10 @@
 'use strict';
 
-var EntityIdGenerator, entityIdGenerator;
+var EntityIdGenerator, entityIdGenerator, emitter;
 
 EntityIdGenerator = require('./entity-id-generator');
 entityGenerator = new EntityIdGenerator();
+emitter = require('./nuclear.events');
 
 /**
  * The Entity constructor
@@ -28,8 +29,8 @@ Entity.prototype.create = function entityCreate(options) {
   var id = Entity.generator.next();
   this.definition(id, options);
 
-  // entity.trigger('create:' + this.name, id);
-  // entity.trigger('create_entity', id, this.name);
+  emitter.trigger('entity:create:' + this.name, id);
+  emitter.trigger('entity:create_entity', id, this.name);
   return id;
 };
 
