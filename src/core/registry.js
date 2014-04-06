@@ -1,10 +1,6 @@
 'use strict';
 
-var Component, Entity, System, rExplicitModuleNotation;
-
-Component = require('./component');
-Entity = require('./entity');
-System = require('./system');
+var rExplicitModuleNotation;
 
 rExplicitModuleNotation = /([^\s]+)\s+from\s+([^\s]+)/;
 
@@ -43,23 +39,26 @@ Registry.prototype.import = function registryImport(module) {
   this._modules[module.name] = module;
 
   for (key in module.exports) {
-    value = module.exports[key];
-
-    if (value instanceof Component) {
+    if ((value = module.component(key))) {
       this._components[key] = value;
-    } else if (value instanceof Entity) {
+    } else if ((value = module.entity(key))) {
       this._entities[key] = value;
-    } else if (value instanceof System) {
+    } else if ((value = module.system(key))) {
       this._systems[key] = value;
     }
   }
 };
 
 Registry.prototype.clear = function registryClear() {
-  this._modules = Object.create(null);
-  this._components = Object.create(null);
-  this._entities = Object.create(null);
-  this._systems = Object.create(null);
+  var storages, i, storage, key;
+
+  storages = ['_modules', '_components', '_entities', '_systems'];
+
+  for (i = 0; (storage = this[storages[i]]); i += 1) {
+    for (key in storage) {
+      delete storage[key];
+    }
+  }
 };
 
 Registry.prototype.module = function registryModule(name) {
