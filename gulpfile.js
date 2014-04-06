@@ -7,7 +7,7 @@ var map = require('map-stream'),
   source = require('vinyl-source-stream'),
   buffer = require('vinyl-buffer'),
   browserify = require('browserify');
-  
+
 var pkg = require('./package.json');
 
 gulp.task('lint:config', lint(['./gulpfile.js']));
@@ -67,7 +67,7 @@ function watch(options) {
   };
 }
 
-gulp.task('hook', function () {
+gulp.task('hooks', function () {
   return gulp.src('./.pre-commit')
     .pipe(plugins.symlink('./.git/hooks', 'pre-commit'));
 });
@@ -76,4 +76,4 @@ gulp.task('hook', function () {
   gulp.task(taskName, [taskName + ':config', taskName + ':test', taskName + ':scripts']);
 });
 
-gulp.task('default', ['hook', 'build', 'watch']);
+gulp.task('default', ['hooks', 'build', 'watch']);
