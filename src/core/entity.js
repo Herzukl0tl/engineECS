@@ -3,7 +3,7 @@
 var EntityIdGenerator, entityIdGenerator;
 
 EntityIdGenerator = require('./entity-id-generator');
-entityGenerator = new EntityIdGenerator();
+entityIdGenerator = new EntityIdGenerator();
 
 /**
  * The Entity constructor
