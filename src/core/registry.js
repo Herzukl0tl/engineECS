@@ -9,6 +9,9 @@ function Registry() {
   this.components = Object.create(null);
   this.entities = Object.create(null);
   this.systems = Object.create(null);
+  
+  this._systemList = [];
+  this._systemLength = 0;
 }
 
 Registry.prototype.import = function registryImport(module) {
@@ -33,6 +36,10 @@ Registry.prototype.import = function registryImport(module) {
     dest = this[storage];
 
     for (key in source) {
+      if(storage === 'systems'){
+        this._systemList.push(key +' from '+module.name);
+        ++this._systemLength;
+      }
       dest[key] = source[key];
     }
   }

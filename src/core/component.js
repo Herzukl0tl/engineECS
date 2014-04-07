@@ -62,7 +62,8 @@ Component.prototype.add = function ComponentAdd(entity) {
   this._components[entity] = component;
 
   nuclearEvents.trigger('component:add:' + this.name, entity, this.name);
-
+  nuclearEvents.trigger('component:add', entity, this.name);
+  
   return component;
 };
 

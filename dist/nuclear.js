@@ -4,18 +4,237 @@
 },{}],2:[function(require,module,exports){
 'use strict';
 
-function Component() {}
+var nuclearEvents = require('./nuclear.events');
+
+/**
+ * Component constructor
+ * This is the components factory
+ * @param {string} name       The component name
+ * @param {function} definition The component function which has to return its instance
+ */
+function Component(name, definition) {
+  this.name = name;
+  this.definition = definition;
+
+  this._components = Object.create(null);
+  this._disabledComponents = Object.create(null);
+}
+
+/**
+ * Return the component of the wanted entity if it has a component of this factory
+ * If the options key 'required' is true, the method throw an error if the entity hasn't the component
+ * If the options key 'add' is true, the method add the component to the entity and return it
+ * @param  {number} entity  The entity which has the component
+ * @param  {object} options The method options
+ * @return {object/undefined}         Return the component if the entity has it, if it hasn't,
+ * return undefined if th required key is false
+ */
+Component.prototype.of = function ComponentOf(entity, options) {
+  var component = this._components[entity] || this._disabledComponents[entity];
+
+  if (arguments.length === 2) {
+    if (!this. in (entity)) {
+      if (options.required) throw new Error();
+      else if (options.add) component = this.add(entity);
+    }
+  }
+
+  return component;
+};
+
+/**
+ * Test if an entity has the component of this factory
+ * @param  {number} entity The entity to test
+ * @return {boolean}        True if the entity has it, fals if it hasn't
+ */
+Component.prototype. in = function ComponentIn(entity) {
+  return entity in this._components || entity in this._disabledComponents;
+};
+
+/**
+ * The method to add a component to an existing entity
+ * All the arguments after the entity one will be passed to the component definition call
+ * The component creation triggers a 'add:'componentName event on the component part of core
+ * @param {number} entity The entity which will get the new component
+ * @return {object}       The created component
+ */
+Component.prototype.add = function ComponentAdd(entity) {
+  if (this. in (entity)) throw new Error();
+
+  var component = this.definition.apply(this, arguments);
+
+  this._components[entity] = component;
+
+  nuclearEvents.trigger('component:add:' + this.name, entity, this.name);
+  nuclearEvents.trigger('component:add', entity, this.name);
+  
+  return component;
+};
+
+/**
+ * Remove the component of this factory to the selected entity
+ * The component destruction triggers a 'remove:'ComponentName event on the component part of core
+ * @param  {number} entity The entity which will lost the component
+ * @return {boolean}        Return false if the entity hasn't the component, true in other case
+ */
+Component.prototype.remove = function ComponentRemove(entity) {
+  if (!this. in (entity)) return false;
+
+  delete this._components[entity];
+  delete this._disabledComponents[entity];
+
+  nuclearEvents.trigger('component:remove:' + this.name, entity, this.name);
+  nuclearEvents.trigger('component:remove', entity, this.name);
+  return true;
+};
+
+/**
+ * Share an attached component to one or several entity(ies)
+ * @param  {number} source The source entity, owning the component to share
+ * @param  {number/array} dest   The selected entity(ies)
+ * @return {object/null}        If the source has the component, it returns it, in other case, it returns null
+ */
+Component.prototype.share = function ComponentShare(source, dest) {
+  if (!this. in (source)) return null;
+
+  var component = this.of(source);
+
+  if (Array.isArray(dest)) {
+    var i;
+    for (i = dest.length - 1; i >= 0; i -= 1) {
+      this._components[dest[i]] = component;
+      nuclearEvents.trigger('component:add:' + this.name, dest[i], this.name);
+      nuclearEvents.trigger('component:add', dest[i], this.name);
+    }
+  } else {
+    this._components[dest] = component;
+    nuclearEvents.trigger('component:add:' + this.name, dest, this.name);
+    nuclearEvents.trigger('component:add', dest, this.name);
+  }
+
+  return component;
+};
+
+/**
+ * Disable the component of the selected entity
+ * @param  {number} id The selected entity
+ * @return {boolean}    If the entity owns the component and it is enabled, it returns true, in other case, it returns false
+ */
+Component.prototype.disable = function ComponentDisable(id) {
+  if (id in this._components) {
+    this._disabledComponents[id] = this._components[id];
+    delete this._components[id];
+
+    nuclearEvents.trigger('component:disable:' + this.name, id, this.name);
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Enable the component of the selected entity
+ * @param  {number} id The selected entity
+ * @return {boolean}    If the entity owns the component and it is disabled, it returns true, in other case, it returns false
+ */
+Component.prototype.enable = function ComponentEnable(id) {
+  if (id in this._disabledComponents) {
+    this._components[id] = this._disabledComponents[id];
+    delete this._disabledComponents[id];
+
+    nuclearEvents.trigger('component:enable:' + this.name, id, this.name);
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Test if the component of the selected entity is enabled or not
+ * @param  {number}  id The selected entity
+ * @return {Boolean}    True if it's enabled, false in other case
+ */
+Component.prototype.isEnabled = function ComponentIsEnabled(id) {
+  if (this. in (id)) {
+    if (id in this._components) return true;
+    return false;
+  }
+
+  throw new Error();
+};
 
 module.exports = Component;
 
-},{}],3:[function(require,module,exports){
+},{"./nuclear.events":9}],3:[function(require,module,exports){
 'use strict';
 
-function Entity() {}
+function EntityIdGenerator(seed) {
+  this._seed = seed || 0;
+  this._value = this._seed;
+}
+
+EntityIdGenerator.prototype.next = function entityIdGeneratorNext() {
+  return (this._value += 1);
+};
+
+EntityIdGenerator.prototype.reset = function entityIdGeneratorReset() {
+  this._value = this._seed;
+};
+
+
+module.exports = EntityIdGenerator;
+
+},{}],4:[function(require,module,exports){
+'use strict';
+
+var EntityIdGenerator, entityIdGenerator, nuclearEvents;
+
+EntityIdGenerator = require('./entity-id-generator');
+entityIdGenerator = new EntityIdGenerator();
+nuclearEvents = require('./nuclear.events');
+
+/**
+ * The Entity constructor
+ * @param {string} name   The Entity name
+ * @param {Object} source The Entity config
+ */
+function Entity(name, definition) {
+  this.name = name;
+  this.definition = definition || function defaultDefinition(){};
+}
+
+Entity.next = function entityNext() {
+  return entityIdGenerator.next();
+};
+
+/**
+ * Create an entity depending on this Entity
+ * @param  {object} options All the components data
+ * @return {number}         The created entity
+ */
+Entity.prototype.create = function entityCreate(options) {
+  var id = Entity.next();
+  this.definition(id, options);
+
+  nuclearEvents.trigger('entity:create:' + this.name, id);
+  nuclearEvents.trigger('entity:create_entity', id, this.name);
+
+  return id;
+};
+
+/**
+ * Enhance an entity with this factory definition
+ * @param  {number} entity The entity to enhance
+ * @param  {object} data Data to configure components
+ * @return {number}            The entity to enhance
+ */
+Entity.prototype.enhance = function entityEnhance(entity, data) {
+  this.definition(entity, data);
+
+  return entity;
+};
 
 module.exports = Entity;
 
-},{}],4:[function(require,module,exports){
+},{"./entity-id-generator":3,"./nuclear.events":9}],5:[function(require,module,exports){
 'use strict';
 
 var nuclear, Module;
@@ -52,7 +271,7 @@ nuclear.import = function nuclearImport(modules) {
   }
 };
 
-},{"./module":5,"./nuclear.component":6,"./nuclear.entity":7,"./nuclear.events":8,"./nuclear.registry":9,"./nuclear.system":10}],5:[function(require,module,exports){
+},{"./module":6,"./nuclear.component":7,"./nuclear.entity":8,"./nuclear.events":9,"./nuclear.registry":10,"./nuclear.system":11}],6:[function(require,module,exports){
 'use strict';
 
 var Component, Entity, System;
@@ -65,36 +284,23 @@ function Module(name, deps) {
   this.name = name.trim();
   this.requires = deps;
 
-  this.exports = Object.create(null);
+  this.components = Object.create(null);
+  this.entities = Object.create(null);
+  this.systems = Object.create(null);
 
   this._config = Object.create(null);
-
-  this._components = Object.create(null);
-  this._entities = Object.create(null);
-  this._systems = Object.create(null);
 }
 
-Module.prototype.components = function moduleComponents() {
-  return Object.keys(this._components);
-};
+Module.prototype.config = function moduleConfig(config) {
+  var key, descriptor;
 
-Module.prototype.entities = function moduleEntities() {
-  return Object.keys(this._entities);
-};
-
-Module.prototype.systems = function moduleSystems() {
-  return Object.keys(this._systems);
-};
-
-Module.prototype.config = function moduleConfig(options) {
-  var key;
-
-  if (arguments.length === 0) {
-    return this._config;
+  if (typeof config === 'string') {
+    return this._config[key = config];
   }
 
-  for (key in options) {
-    this._config[key] = options[key];
+  for (key in config) {
+    descriptor = Object.getOwnPropertyDescriptor(config, key);
+    if (descriptor) Object.defineProperty(this._config, key, descriptor);
   }
 
   return this;
@@ -104,18 +310,18 @@ Module.prototype.component = function moduleComponent(name, factory) {
   var component;
 
   if (arguments.length === 1) {
-    component = this._components[name];
+    component = this.components[name];
 
     if (component) return component;
 
     throw new Error();
   }
 
-  if (name in this.exports) {
+  if (name in this.components) {
     throw new Error();
   }
 
-  this.exports[name] = this._components[name] = new Component(name, factory);
+  this.components[name] = new Component(name, factory);
 
   return this;
 };
@@ -124,71 +330,172 @@ Module.prototype.entity = function moduleEntity(name, factory) {
   var entity;
 
   if (arguments.length === 1) {
-    entity = this._entities[name];
+    entity = this.entities[name];
 
     if (entity) return entity;
 
     throw new Error();
   }
 
-  if (name in this.exports) {
+  if (name in this.entities) {
     throw new Error();
   }
 
-  this.exports[name] = this._entities[name] = new Entity(name, factory);
+  this.entities[name] = new Entity(name, factory);
 
   return this;
 };
 
-Module.prototype.system = function moduleSystem(name, components) {
+Module.prototype.system = function moduleSystem(name, components, definition, options) {
   var system;
 
   if (arguments.length === 1) {
-    system = this._systems[name];
+    system = this.systems[name];
 
     if (system) return system;
 
     throw new Error();
   }
 
-  if (name in this.exports) {
+  if (name in this.systems) {
     throw new Error();
   }
 
-  this.exports[name] = this._systems[name] = new System(name, components);
+  this.systems[name] = new System(name, components, definition, options);
 
   return this;
 };
 
 module.exports = Module;
 
-},{"./component":2,"./entity":3,"./system":12}],6:[function(require,module,exports){
+},{"./component":2,"./entity":4,"./system":13}],7:[function(require,module,exports){
 'use strict';
 
-var registry;
+var registry = require('./nuclear.registry'),
+    nuclearEvents = require('./nuclear.events'),
+    entityList = Object.create(null);
 
-registry = require('./nuclear.registry');
-
+/**
+ * The nuclearComponent method which contains all Component definition
+ * This is also the nuclearComponents definition getter (throws an error if the Component doesn't exist)
+ * @param  {string} name The Component name
+ * @return {object}      The selected Component
+ */
 function nuclearComponent(name) {
   return registry.component(name);
 }
 
-module.exports = nuclearComponent;
+/**
+ * Get all the selected entity nuclearComponents
+ * @param  {number} id The selected entity
+ * @return {array}    A simple string array containing all the nuclearComponents names of the selected entity
+ */
+nuclearComponent.all = function nuclearComponentOf(id) {
+  if (entityList[id]) return entityList[id];
 
-},{"./nuclear.registry":9}],7:[function(require,module,exports){
+  throw new Error();
+};
+
+function linkComponent(id, name) {
+  var components = entityList[id] || [];
+  components.push(name);
+  entityList[id] = components;
+}
+
+function unLinkComponent(id, name) {
+  var components = nuclearComponent.all(id);
+  var index = components.indexOf(name);
+
+  components.splice(index, 1);
+}
+
+nuclearEvents.on('component:add', linkComponent);
+nuclearEvents.on('component:remove', unLinkComponent);
+
+module.exports = nuclearComponent;
+},{"./nuclear.events":9,"./nuclear.registry":10}],8:[function(require,module,exports){
 'use strict';
 
-var registry;
+var registry = require('./nuclear.registry'),
+    nuclearComponent = require('./nuclear.component'),
+    Entity = require('./entity'),
+    nuclearEvents = require('./nuclear.events');
 
-registry = require('./nuclear.registry');
-
+/**
+ * The nuclearEntity method which contains all entities definitions
+ * This is also the nuclearEntity definition getter (throws an error if the Entity doesn't exist)
+ * @param  {string} name The Entity name
+ * @return {object}      The selected Entity
+ */
 function nuclearEntity(name) {
   return registry.entity(name);
 }
 
+/**
+ * Serialize the selected nuclearEntity
+ * @param  {number} id The selected nuclearEntity
+ * @return {string}    The serialized nuclearEntity
+ */
+nuclearEntity.serialize = function nuclearEntitySerialize(id) {
+  var serialized = Object.create(null),
+    components = nuclearComponent.all(id); //change .of to .all here
+
+  serialized.id = id;
+  serialized.options = Object.create(null);
+
+  for (var i = components.length - 1; i > 0; i--) {
+    var name = components[i];
+    var definition = nuclearComponent(name);
+    var data = definition.of(id);
+
+    if (typeof data.toJSON === 'function') data = data.toJSON();
+    serialized.options[name] = data;
+  }
+
+  return JSON.stringify(serialized);
+};
+
+/**
+ * Deserialize a serialized nuclearEntity
+ * @param  {string} serialized The serialized nuclearEntity
+ * @return {number}            The created nuclearEntity id
+ */
+nuclearEntity.deserialize = function nuclearEntityDeserialize(serialized) {
+  serialized = JSON.parse(serialized);
+  var id = nuclearEntity.create(serialized.options);
+
+  return id;
+};
+
+/**
+ * Remove the selected nuclearEntity and its components
+ * @param  {number} id The selected nuclearEntity
+ * @return {boolean}    Return true
+ */
+nuclearEntity.remove = function nuclearEntityRemove(id) {
+  var components = nuclearComponent.of(id);
+
+  for (var i = components.length - 1; i >= 0; i -= 1) {
+    nuclearComponent(components[i]).remove(id);
+  }
+
+  nuclearEvents.trigger('entity:remove', id);
+  return true;
+};
+
+nuclearEntity.create = function nuclearEntityCreate(options){
+  var id = Entity.next(),
+      i;
+  for(i in options){
+    nuclearComponent(i).add(id, options[i]);
+  }
+
+  return id;
+};
+
 module.exports = nuclearEntity;
 
-},{"./nuclear.registry":9}],8:[function(require,module,exports){
+},{"./entity":4,"./nuclear.component":7,"./nuclear.events":9,"./nuclear.registry":10}],9:[function(require,module,exports){
 'use strict';
 
 var EventsEmitter;
@@ -197,7 +504,7 @@ EventsEmitter = require('../../lib/events-emitter.min');
 
 module.exports = new EventsEmitter();
 
-},{"../../lib/events-emitter.min":1}],9:[function(require,module,exports){
+},{"../../lib/events-emitter.min":1}],10:[function(require,module,exports){
 'use strict';
 
 var Registry;
@@ -206,88 +513,129 @@ Registry = require('./registry');
 
 module.exports = new Registry();
 
-},{"./registry":11}],10:[function(require,module,exports){
+},{"./registry":12}],11:[function(require,module,exports){
 'use strict';
 
-var registry;
+var registry = require('./nuclear.registry'),
+    nuclearEvents = require('./nuclear.events');
 
-registry = require('./nuclear.registry');
-
+/**
+ * The nuclearSystem method which contains all nuclearSystem definitions
+ * This is also the nuclearSystem definition getter (throws an error if the System doesn't exist)
+ * @param  {string} name The System name
+ * @return {object}      The selected System
+ */
 function nuclearSystem(name) {
   return registry.system(name);
 }
 
+/**
+ * Define the run priority of the selected nuclearSystem
+ * @param  {string} name The selected System name
+ * @param  {number} prio The priority of the nuclearSystem
+ */
+nuclearSystem.priority = function nuclearSystemPriority(name, prio) {
+  if (arguments.length === 1) {
+    return nuclearSystem(name)._priority;
+  }
+
+  nuclearSystem(name)._priority = prio;
+  registry._systemList.sort(nuclearSystemsPriorityComparator);
+};
+
+function nuclearSystemsPriorityComparator(a, b) {
+  return a._priority - b._priority;
+}
+
+/**
+ * Run all the nuclearSystem list
+ */
+nuclearSystem.run = function nuclearSystemRun() {
+  nuclearEvents.trigger('system:before_running', nuclearSystem._list);
+  var x;
+  for (x = 0; x < registry._systemLength; x++) {
+    nuclearSystem(registry._systemList[x]).run();
+  }
+  nuclearEvents.trigger('system:after_running', registry._systemList);
+};
+
+/**
+ * Disable a nuclearSystem in the nuclearSystem list
+ * @param  {string} name The System name
+ */
+nuclearSystem.disable = function nuclearSystemDisable(name) {
+  var index = registry.systems.indexOf(name);
+  registry.systems.splice(index, 1);
+};
+
 module.exports = nuclearSystem;
 
-},{"./nuclear.registry":9}],11:[function(require,module,exports){
+},{"./nuclear.events":9,"./nuclear.registry":10}],12:[function(require,module,exports){
 'use strict';
 
-var Component, Entity, System, rExplicitModuleNotation;
-
-Component = require('./component');
-Entity = require('./entity');
-System = require('./system');
+var rExplicitModuleNotation;
 
 rExplicitModuleNotation = /([^\s]+)\s+from\s+([^\s]+)/;
 
 function Registry() {
-  this._modules = Object.create(null);
-  this._components = Object.create(null);
-  this._entities = Object.create(null);
-  this._systems = Object.create(null);
+  this.modules = Object.create(null);
+  this.components = Object.create(null);
+  this.entities = Object.create(null);
+  this.systems = Object.create(null);
+  
+  this._systemList = [];
+  this._systemLength = 0;
 }
 
-Registry.prototype.components = function registryComponents() {
-  return Object.keys(this._components);
-};
-
-Registry.prototype.entities = function registryEntities() {
-  return Object.keys(this._entities);
-};
-
-Registry.prototype.systems = function registrySystems() {
-  return Object.keys(this._systems);
-};
-
 Registry.prototype.import = function registryImport(module) {
-  var i, length, key, value;
+  var length, i, storages, storage, source, dest, key;
 
-  if (module.name in this._modules) return;
+  if (module.name in this.modules) return;
 
   length = module.requires.length;
 
   for (i = 0; i < length; i += 1) {
-    if (!(module.requires[i] in this._modules)) {
+    if (!(module.requires[i] in this.modules)) {
       throw new Error();
     }
   }
 
-  this._modules[module.name] = module;
+  this.modules[module.name] = module;
 
-  for (key in module.exports) {
-    value = module.exports[key];
+  storages = ['components', 'entities', 'systems'];
 
-    if (value instanceof Component) {
-      this._components[key] = value;
-    } else if (value instanceof Entity) {
-      this._entities[key] = value;
-    } else if (value instanceof System) {
-      this._systems[key] = value;
+  for (i = 0; (storage = storages[i]); i += 1) {
+    source = module[storage];
+    dest = this[storage];
+
+    for (key in source) {
+      if(storage === 'systems'){
+        this._systemList.push(key +' from '+module.name);
+        ++this._systemLength;
+      }
+      dest[key] = source[key];
     }
   }
 };
 
 Registry.prototype.clear = function registryClear() {
-  this._modules = Object.create(null);
-  this._components = Object.create(null);
-  this._entities = Object.create(null);
-  this._systems = Object.create(null);
+  var storages, i, storage, source, key;
+
+  storages = ['modules', 'components', 'entities', 'systems'];
+
+  for (i = 0; (storage = storages[i]); i += 1) {
+    source = this[storage];
+
+    for (key in source) {
+      delete source[key];
+    }
+  }
 };
 
 Registry.prototype.module = function registryModule(name) {
   var module;
 
-  module = this._modules[name];
+  module = this.modules[name];
 
   if (module) return module;
 
@@ -301,7 +649,7 @@ Registry.prototype.component = function registryComponent(name) {
     return this.module(RegExp.$2).component(RegExp.$1);
   }
 
-  component = this._components[name];
+  component = this.components[name];
 
   if (component) return component;
 
@@ -315,7 +663,7 @@ Registry.prototype.entity = function registryEntity(name) {
     return this.module(RegExp.$2).entity(RegExp.$1);
   }
 
-  entity = this._entities[name];
+  entity = this.entities[name];
 
   if (entity) return entity;
 
@@ -329,7 +677,7 @@ Registry.prototype.system = function registrySystem(name) {
     return this.module(RegExp.$2).system(RegExp.$1);
   }
 
-  system = this._systems[name];
+  system = this.systems[name];
 
   if (system) return system;
 
@@ -338,14 +686,248 @@ Registry.prototype.system = function registrySystem(name) {
 
 module.exports = Registry;
 
-},{"./component":2,"./entity":3,"./system":12}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
-function System() {}
+var nuclearComponent = require('./nuclear.component'),
+    nuclearSystem = require('./nuclear.system'),
+    nuclearEvents = require('./nuclear.events'),
+    eventsOptions = {};
+
+/**
+ * The System constructor
+ * @param {string} name       The System name
+ * @param {array} components The System required components
+ * @param {function} definition The System definition
+ * @param {object} options    The System options
+ */
+function System(name, components, definition, options) {
+  options = options || {};
+  
+  this.name = name;
+  this.definition = definition;
+  this.components = components;
+
+  this._context = Object.create(options.context || null);
+
+  this.entities = [];
+  this._deferredEntities = [];
+  this._sorterManager = Object.create({
+    comparator: function () {},
+    toDeferred: false
+  });
+
+  this._componentPacks = Object.create(null);
+  this._removeEntities = Object.create(null);
+
+  this._priority = 0;
+
+  // this._scheduler = new Scheduler(options.msPerUpdate, options.strict, options.extrapolation);
+  // this._scheduler.start();
+
+  systemListenComponents(this, components);
+
+  if (options.disable !== undefined) {
+    systemDisableSystems(this, options.disable);
+  }
+
+  nuclearEvents.on('system:after_running', function () {
+    if (this._sorterManager.toDeferred) {
+      this.entities.sort(this._sorterManager.comparator);
+      this._sorterManager.toDeferred = false;
+    }
+  }, {
+    context: this
+  });
+}
+
+/**
+ * Check if the entity parameter is valid for this system
+ * If No : return false
+ * If Yes : add the entity to the entities list of the system, and return true
+ * @param {number} entity The entity to add
+ */
+System.prototype.add = function SystemAdd(entity) {
+  if (this.entities.indexOf(entity) > -1) return false;
+
+  var componentPack = this.check(entity);
+  if (componentPack === null) return false;
+
+  this.entities.push(entity);
+  this._componentPacks[entity] = componentPack;
+
+  return true;
+};
+
+/**
+ * Remove the selected entity frome the system garbage list
+ * @param  {number} entity The selected entity
+ * @return {boolean}        If the entity is in the system, it returns true, in other case, it returns false
+ */
+System.prototype.remove = function SystemRemove(entity) {
+  var index = this.entities.indexOf(parseInt(entity));
+  if (index < 0) return false;
+
+  this.entities.splice(index, 1);
+  delete this._componentPacks[entity];
+
+  return true;
+};
+
+/**
+ * Check if an entity is runnable by the system
+ * @param  {number} entity The selected entity
+ * @return {null/object}   Return null if the entity isn't runnable, return its components in other case
+ */
+System.prototype.check = function SystemCheck(entity) {
+  var componentPack = Object.create(null),
+      i, comp;
+      
+  for (i = this.components.length - 1; i >= 0; i--) {
+    comp = nuclearComponent(this.components[i]).of(entity);
+    
+    if (comp === undefined) return null;
+    
+    componentPack[this.components[i]] = comp;
+  }
+
+  return componentPack;
+};
+
+/**
+ * Run the system on the selected entity, or on all the entities if no arguments
+ * @param  {number} entity The selected entity
+ * @return {System} Return the System itself
+ */
+System.prototype.run = function SystemRun(entity) {
+  var self = this;
+  systemParseDeferred(self);
+
+  if (arguments.length === 1) {
+    if (this.entities.indexOf(entity) !== -1) {
+      var componentPack = self._componentPacks[entity];
+      nuclearEvents.trigger('system:before:' + self.name, entity, componentPack);
+      systemDefinitionRunEntity(self, entity, componentPack);
+      nuclearEvents.trigger('system:after:' + self.name, entity, componentPack);
+      return true;
+    }
+    return false;
+  } else {
+    nuclearEvents.trigger('system:before:' + self.name, self.entities, self._componentPacks);
+
+    if (self._autosortComparator !== null) {
+      self.entities.sort(self._autosortComparator);
+    }
+
+    var length = self.entities.length;
+
+    for (var i = 0; i < length; i++) {
+      // self._context._deltaTime = deltaTime;
+      systemDefinitionRunEntity(self, self.entities[i], self._componentPacks[self.entities[i]]);
+    }
+
+    nuclearEvents.trigger('system:after:' + self.name, self.entities, self._componentPacks);
+  }
+
+  return self;
+};
+
+/**
+ * Sort the internal entity list of the system
+ * @param  {function} comparator The sorting function
+ * @return {System}    The System itself
+ */
+System.prototype.sort = function SystemSort(comparator) {
+  this._sorterManager.comparator = comparator;
+  this._sorterManager.toDeferred = true;
+
+  return this;
+};
+
+/**
+ * Define an autosort compartor which will sort the System
+ * at each frame
+ * @param  {function} comparator The sorting function
+ * @return {System}    The System itself
+ */
+System.prototype.autosort = function SystemAutoSort(comparator) {
+  if (arguments.length === 0) {
+    return this._autosortComparator;
+  }
+
+  this._autosortComparator = comparator.bind(this._context);
+
+  return this;
+};
+
+/**
+ * Refresh the system entities list
+ */
+System.prototype.refresh = function SystemRefresh() {
+  systemParseDeferred(this);
+};
+
+function systemDefinitionRunEntity(self, entity, componentPack) {
+  var context = self._context,
+    components = self.components;
+
+  for (var i = components.length - 1; i >= 0; i--) {
+    context[components[i]] = componentPack[components[i]];
+  }
+
+
+  self.definition.call(context, entity);
+}
+
+function systemParseDeferred(self) {
+  var entity;
+  for (var i = 0; i < self._deferredEntities.length; i++) {
+    entity = self._deferredEntities[i];
+    if (self._removeEntities[entity] !== undefined) {
+      self.remove(entity);
+      delete self._removeEntities[entity];
+      continue;
+    }
+
+    self.add(entity);
+  }
+
+  self._deferredEntities.length = 0;
+}
+
+function systemAddToDeferred(entity) {
+  this._deferredEntities.push(entity);// jshint ignore:line
+}
+
+function systemAddToDeferredAndRemove(entity, componentName) {
+  this._deferredEntities.push(entity);// jshint ignore:line
+  this._removeEntities[entity] = componentName;// jshint ignore:line
+}
+
+function systemListenComponents(self, components) {
+  var options = eventsOptions,
+      i;
+
+  options.context = self;
+      
+  for (i = 0; i < components.length; i++) {
+    nuclearEvents.on('component:add:' + components[i], systemAddToDeferred, options);
+    nuclearEvents.on('component:enable:' + components[i], systemAddToDeferred, options);
+     
+    nuclearEvents.on('component:remove:' + components[i], systemAddToDeferredAndRemove, options);
+    nuclearEvents.on('component:disable:' + components[i], systemAddToDeferredAndRemove, options);
+  }
+}
+
+function systemDisableSystems(self, systems) {
+  for (var i = 0; i < systems.length; i++) {
+    nuclearSystem.disable(systems[i]);
+  }
+}
 
 module.exports = System;
 
-},{}],13:[function(require,module,exports){
+},{"./nuclear.component":7,"./nuclear.events":9,"./nuclear.system":11}],14:[function(require,module,exports){
 'use strict';
 
 var pool, watchers;
@@ -360,7 +942,7 @@ window.nuclear.import([watchers]);
 window.Pool = pool.Pool;
 window.FixedPool = pool.FixedPool;
 
-},{"./core/index":4,"./modules/core.watchers":14,"./pool":19}],14:[function(require,module,exports){
+},{"./core/index":5,"./modules/core.watchers":15,"./pool":20}],15:[function(require,module,exports){
 'use strict';
 
 var nuclear, WatcherComponent, watchSystem;
@@ -375,7 +957,7 @@ module.exports = nuclear.module('core.watchers', [])
   })
   .system('watch', ['watchers'], watchSystem);
 
-},{"./../../core/index":4,"./watch-system":15,"./watcher-component":16}],15:[function(require,module,exports){
+},{"./../../core/index":5,"./watch-system":16,"./watcher-component":17}],16:[function(require,module,exports){
 'use strict';
 
 function watchSystem(e) {
@@ -398,7 +980,7 @@ function watchSystem(e) {
 
 module.exports = watchSystem;
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 var nuclear;
@@ -513,7 +1095,7 @@ WatcherComponent.prototype._unwatch = function _watcherComponentUnwatch(path) {
 
 module.exports = WatcherComponent;
 
-},{"./../../core/index":4}],17:[function(require,module,exports){
+},{"./../../core/index":5}],18:[function(require,module,exports){
 'use strict';
 
 function FixedPool(factory, options) {
@@ -592,7 +1174,7 @@ FixedPool.defaults = {
 
 module.exports = FixedPool;
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 function Pool(factory, options) {
@@ -685,10 +1267,10 @@ Pool.defaults = {
 
 module.exports = Pool;
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 exports.Pool = require('./Pool');
 exports.FixedPool = require('./FixedPool');
 
-},{"./FixedPool":17,"./Pool":18}]},{},[13])
+},{"./FixedPool":18,"./Pool":19}]},{},[14]);

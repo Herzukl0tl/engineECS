@@ -9,7 +9,7 @@ module.exports = function (grunt) {
 
     'test': ['jasmine_node'],
 
-    'build': ['lint:scripts', 'test', 'clean:scripts', 'browserify', 'uglify'],
+    'build': ['lint:scripts', 'clean:scripts', 'browserify', 'uglify'],
 
     'hooks': ['clean:hooks', 'shell:hooks'],
 

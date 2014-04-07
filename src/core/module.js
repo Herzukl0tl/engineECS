@@ -72,7 +72,7 @@ Module.prototype.entity = function moduleEntity(name, factory) {
   return this;
 };
 
-Module.prototype.system = function moduleSystem(name, components) {
+Module.prototype.system = function moduleSystem(name, components, definition, options) {
   var system;
 
   if (arguments.length === 1) {
@@ -87,7 +87,7 @@ Module.prototype.system = function moduleSystem(name, components) {
     throw new Error();
   }
 
-  this.systems[name] = new System(name, components);
+  this.systems[name] = new System(name, components, definition, options);
 
   return this;
 };

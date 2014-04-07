@@ -13,7 +13,7 @@ nuclearEvents = require('./nuclear.events');
  */
 function Entity(name, definition) {
   this.name = name;
-  this.definition = definition || function defaultDefinition(){};
+  this.definition = definition || function defaultDefinition(){};
 }
 
 Entity.next = function entityNext() {
@@ -26,7 +26,7 @@ Entity.next = function entityNext() {
  * @return {number}         The created entity
  */
 Entity.prototype.create = function entityCreate(options) {
-  var id = Entity.generator.next();
+  var id = Entity.next();
   this.definition(id, options);
 
   nuclearEvents.trigger('entity:create:' + this.name, id);

@@ -10,7 +10,7 @@ var registry = require('./nuclear.registry'),
  * @return {object}      The selected System
  */
 function nuclearSystem(name) {
-  return registry.entity(name);
+  return registry.system(name);
 }
 
 /**
@@ -24,7 +24,7 @@ nuclearSystem.priority = function nuclearSystemPriority(name, prio) {
   }
 
   nuclearSystem(name)._priority = prio;
-  registry.systems.sort(nuclearSystemsPriorityComparator);
+  registry._systemList.sort(nuclearSystemsPriorityComparator);
 };
 
 function nuclearSystemsPriorityComparator(a, b) {
@@ -37,11 +37,10 @@ function nuclearSystemsPriorityComparator(a, b) {
 nuclearSystem.run = function nuclearSystemRun() {
   nuclearEvents.trigger('system:before_running', nuclearSystem._list);
   var x;
-  
-  for (x = 0; x < registry.systems.length; x++) {
-    nuclearSystem(registry.systems[x]).run();
+  for (x = 0; x < registry._systemLength; x++) {
+    nuclearSystem(registry._systemList[x]).run();
   }
-  nuclearEvents.trigger('system:after_running', nuclearSystem._list);
+  nuclearEvents.trigger('system:after_running', registry._systemList);
 };
 
 /**

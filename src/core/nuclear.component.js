@@ -11,11 +11,8 @@ var registry = require('./nuclear.registry'),
  * @return {object}      The selected Component
  */
 function nuclearComponent(name) {
-  return registry.nuclearComponent(name);
+  return registry.component(name);
 }
-
-nuclearEvents.on('component:add', linkComponent);
-nuclearEvents.on('component:remove', unLinkComponent);
 
 /**
  * Get all the selected entity nuclearComponents
@@ -23,7 +20,7 @@ nuclearEvents.on('component:remove', unLinkComponent);
  * @return {array}    A simple string array containing all the nuclearComponents names of the selected entity
  */
 nuclearComponent.all = function nuclearComponentOf(id) {
-  if (registry.entityToComponents[id]) return registry.entityToComponents[id];
+  if (entityList[id]) return entityList[id];
 
   throw new Error();
 };
@@ -40,5 +37,8 @@ function unLinkComponent(id, name) {
 
   components.splice(index, 1);
 }
+
+nuclearEvents.on('component:add', linkComponent);
+nuclearEvents.on('component:remove', unLinkComponent);
 
 module.exports = nuclearComponent;
