@@ -12,12 +12,13 @@ var nuclearComponent = require('./nuclear.component'),
  * @param {function} definition The System definition
  * @param {object} options    The System options
  */
-function System(name, components, definition, options) {
+function System(name, components, definition, moduleName, options) {
   options = options || {};
   
   this.name = name;
   this.definition = definition;
   this.components = components;
+  this.moduleName = moduleName;
 
   this._context = Object.create(options.context || null);
 
@@ -117,14 +118,14 @@ System.prototype.run = function SystemRun(entity) {
   if (arguments.length === 1) {
     if (this.entities.indexOf(entity) !== -1) {
       var componentPack = self._componentPacks[entity];
-      nuclearEvents.trigger('system:before:' + self.name, entity, componentPack);
+      nuclearEvents.trigger('system:before:' + self.identity(), entity, componentPack, self.name, self.moduleName);
       systemDefinitionRunEntity(self, entity, componentPack);
-      nuclearEvents.trigger('system:after:' + self.name, entity, componentPack);
+      nuclearEvents.trigger('system:after:' + self.identity(), entity, componentPack, self.name, self.moduleName);
       return true;
     }
     return false;
   } else {
-    nuclearEvents.trigger('system:before:' + self.name, self.entities, self._componentPacks);
+    nuclearEvents.trigger('system:before:' + self.identity(), self.entities, self._componentPacks, self.name, self.moduleName);
 
     if (self._autosortComparator !== null) {
       self.entities.sort(self._autosortComparator);
@@ -137,7 +138,7 @@ System.prototype.run = function SystemRun(entity) {
       systemDefinitionRunEntity(self, self.entities[i], self._componentPacks[self.entities[i]]);
     }
 
-    nuclearEvents.trigger('system:after:' + self.name, self.entities, self._componentPacks);
+    nuclearEvents.trigger('system:after:' + self.identity(), self.entities, self._componentPacks, self.name, self.moduleName);
   }
 
   return self;
@@ -178,16 +179,17 @@ System.prototype.refresh = function SystemRefresh() {
   systemParseDeferred(this);
 };
 
+/**
+ * Return the System's identity
+ * It containes it's name and it's module's name
+ * @return {String}    The System identity
+ */
+System.prototype.identity = function SystemIdentity(){
+  return this.name+' from '+this.moduleName;
+};
+
 function systemDefinitionRunEntity(self, entity, componentPack) {
-  var context = self._context,
-    components = self.components;
-
-  for (var i = components.length - 1; i >= 0; i--) {
-    context[components[i]] = componentPack[components[i]];
-  }
-
-
-  self.definition.call(context, entity);
+  self.definition(componentPack, entity);
 }
 
 function systemParseDeferred(self) {

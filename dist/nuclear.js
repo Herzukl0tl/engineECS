@@ -12,12 +12,14 @@ var nuclearEvents = require('./nuclear.events');
  * @param {string} name       The component name
  * @param {function} definition The component function which has to return its instance
  */
-function Component(name, definition) {
+function Component(name, definition, moduleName) {
   this.name = name;
   this.definition = definition;
 
   this._components = Object.create(null);
   this._disabledComponents = Object.create(null);
+
+  this.moduleName = moduleName;
 }
 
 /**
@@ -65,8 +67,8 @@ Component.prototype.add = function ComponentAdd(entity) {
 
   this._components[entity] = component;
 
-  nuclearEvents.trigger('component:add:' + this.name, entity, this.name);
-  nuclearEvents.trigger('component:add', entity, this.name);
+  nuclearEvents.trigger('component:add:' + this.identity(), entity, this.name, this.moduleName);
+  nuclearEvents.trigger('component:add', entity, this.identity(), this.name, this.moduleName);
   
   return component;
 };
@@ -83,8 +85,8 @@ Component.prototype.remove = function ComponentRemove(entity) {
   delete this._components[entity];
   delete this._disabledComponents[entity];
 
-  nuclearEvents.trigger('component:remove:' + this.name, entity, this.name);
-  nuclearEvents.trigger('component:remove', entity, this.name);
+  nuclearEvents.trigger('component:remove:' + this.identity(), entity, this.name, this.moduleName);
+  nuclearEvents.trigger('component:remove', entity, this.identity(), this.name, this.moduleName);
   return true;
 };
 
@@ -103,13 +105,13 @@ Component.prototype.share = function ComponentShare(source, dest) {
     var i;
     for (i = dest.length - 1; i >= 0; i -= 1) {
       this._components[dest[i]] = component;
-      nuclearEvents.trigger('component:add:' + this.name, dest[i], this.name);
-      nuclearEvents.trigger('component:add', dest[i], this.name);
+      nuclearEvents.trigger('component:add:' + this.identity(), dest[i], this.name, this.moduleName);
+      nuclearEvents.trigger('component:add', dest[i], this.identity(), this.name, this.moduleName);
     }
   } else {
     this._components[dest] = component;
-    nuclearEvents.trigger('component:add:' + this.name, dest, this.name);
-    nuclearEvents.trigger('component:add', dest, this.name);
+    nuclearEvents.trigger('component:add:' + this.identity(), dest, this.name, this.moduleName);
+    nuclearEvents.trigger('component:add', dest, this.identity(), this.name, this.moduleName);
   }
 
   return component;
@@ -161,6 +163,15 @@ Component.prototype.isEnabled = function ComponentIsEnabled(id) {
   throw new Error();
 };
 
+/**
+ * Return the Component's identity
+ * It containes it's name and it's module's name
+ * @return {String}    The component identity
+ */
+Component.prototype.identity = function ComponentIdentity(){
+  return this.name+' from '+this.moduleName;
+};
+
 module.exports = Component;
 
 },{"./nuclear.events":9}],3:[function(require,module,exports){
@@ -196,9 +207,11 @@ nuclearEvents = require('./nuclear.events');
  * @param {string} name   The Entity name
  * @param {Object} source The Entity config
  */
-function Entity(name, definition) {
+function Entity(name, definition, moduleName) {
   this.name = name;
   this.definition = definition || function defaultDefinition(){};
+
+  this.moduleName = moduleName;
 }
 
 Entity.next = function entityNext() {
@@ -214,8 +227,8 @@ Entity.prototype.create = function entityCreate(options) {
   var id = Entity.next();
   this.definition(id, options);
 
-  nuclearEvents.trigger('entity:create:' + this.name, id);
-  nuclearEvents.trigger('entity:create_entity', id, this.name);
+  nuclearEvents.trigger('entity:create:' + this.identity(), id, this.name, this.moduleName);
+  nuclearEvents.trigger('entity:create_entity', id, this.identity(), this.name, this.moduleName);
 
   return id;
 };
@@ -230,6 +243,15 @@ Entity.prototype.enhance = function entityEnhance(entity, data) {
   this.definition(entity, data);
 
   return entity;
+};
+
+/**
+ * Return the Entity's identity
+ * It containes it's name and it's module's name
+ * @return {String}    The Entity identity
+ */
+Entity.prototype.identity = function entityIdentity(){
+  return this.name+' from '+this.moduleName;
 };
 
 module.exports = Entity;
@@ -274,11 +296,12 @@ nuclear.import = function nuclearImport(modules) {
 },{"./module":6,"./nuclear.component":7,"./nuclear.entity":8,"./nuclear.events":9,"./nuclear.registry":10,"./nuclear.system":11}],6:[function(require,module,exports){
 'use strict';
 
-var Component, Entity, System;
+var Component, Entity, System, registry;
 
 Component = require('./component');
 Entity = require('./entity');
 System = require('./system');
+registry = require('./nuclear.registry');
 
 function Module(name, deps) {
   this.name = name.trim();
@@ -321,7 +344,7 @@ Module.prototype.component = function moduleComponent(name, factory) {
     throw new Error();
   }
 
-  this.components[name] = new Component(name, factory);
+  this.components[name] = new Component(name, factory, this.name);
 
   return this;
 };
@@ -341,13 +364,13 @@ Module.prototype.entity = function moduleEntity(name, factory) {
     throw new Error();
   }
 
-  this.entities[name] = new Entity(name, factory);
+  this.entities[name] = new Entity(name, factory, this.name);
 
   return this;
 };
 
 Module.prototype.system = function moduleSystem(name, components, definition, options) {
-  var system;
+  var system, i, component;
 
   if (arguments.length === 1) {
     system = this.systems[name];
@@ -357,18 +380,25 @@ Module.prototype.system = function moduleSystem(name, components, definition, op
     throw new Error();
   }
 
+  for(i = 0; i < components.length; i++){
+    component = components[i];
+    if (!registry.rExplicitModuleNotation.test(component)) {
+        components[i] = component + ' from ' + this.name;
+    }
+  }
+
   if (name in this.systems) {
     throw new Error();
   }
 
-  this.systems[name] = new System(name, components, definition, options);
+  this.systems[name] = new System(name, components, definition, this.name, options);
 
   return this;
 };
 
 module.exports = Module;
 
-},{"./component":2,"./entity":4,"./system":13}],7:[function(require,module,exports){
+},{"./component":2,"./entity":4,"./nuclear.registry":10,"./system":13}],7:[function(require,module,exports){
 'use strict';
 
 var registry = require('./nuclear.registry'),
@@ -585,6 +615,8 @@ function Registry() {
   
   this._systemList = [];
   this._systemLength = 0;
+
+  this.rExplicitModuleNotation = rExplicitModuleNotation;
 }
 
 Registry.prototype.import = function registryImport(module) {
@@ -701,12 +733,13 @@ var nuclearComponent = require('./nuclear.component'),
  * @param {function} definition The System definition
  * @param {object} options    The System options
  */
-function System(name, components, definition, options) {
+function System(name, components, definition, moduleName, options) {
   options = options || {};
   
   this.name = name;
   this.definition = definition;
   this.components = components;
+  this.moduleName = moduleName;
 
   this._context = Object.create(options.context || null);
 
@@ -806,14 +839,14 @@ System.prototype.run = function SystemRun(entity) {
   if (arguments.length === 1) {
     if (this.entities.indexOf(entity) !== -1) {
       var componentPack = self._componentPacks[entity];
-      nuclearEvents.trigger('system:before:' + self.name, entity, componentPack);
+      nuclearEvents.trigger('system:before:' + self.identity(), entity, componentPack, self.name, self.moduleName);
       systemDefinitionRunEntity(self, entity, componentPack);
-      nuclearEvents.trigger('system:after:' + self.name, entity, componentPack);
+      nuclearEvents.trigger('system:after:' + self.identity(), entity, componentPack, self.name, self.moduleName);
       return true;
     }
     return false;
   } else {
-    nuclearEvents.trigger('system:before:' + self.name, self.entities, self._componentPacks);
+    nuclearEvents.trigger('system:before:' + self.identity(), self.entities, self._componentPacks, self.name, self.moduleName);
 
     if (self._autosortComparator !== null) {
       self.entities.sort(self._autosortComparator);
@@ -826,7 +859,7 @@ System.prototype.run = function SystemRun(entity) {
       systemDefinitionRunEntity(self, self.entities[i], self._componentPacks[self.entities[i]]);
     }
 
-    nuclearEvents.trigger('system:after:' + self.name, self.entities, self._componentPacks);
+    nuclearEvents.trigger('system:after:' + self.identity(), self.entities, self._componentPacks, self.name, self.moduleName);
   }
 
   return self;
@@ -867,16 +900,17 @@ System.prototype.refresh = function SystemRefresh() {
   systemParseDeferred(this);
 };
 
+/**
+ * Return the System's identity
+ * It containes it's name and it's module's name
+ * @return {String}    The System identity
+ */
+System.prototype.identity = function SystemIdentity(){
+  return this.name+' from '+this.moduleName;
+};
+
 function systemDefinitionRunEntity(self, entity, componentPack) {
-  var context = self._context,
-    components = self.components;
-
-  for (var i = components.length - 1; i >= 0; i--) {
-    context[components[i]] = componentPack[components[i]];
-  }
-
-
-  self.definition.call(context, entity);
+  self.definition(componentPack, entity);
 }
 
 function systemParseDeferred(self) {

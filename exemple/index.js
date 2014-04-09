@@ -4,9 +4,11 @@
     m.component('position', function(entity, data){
       return {x : data.x, y : data.y}
     });
-    m.system('move', ['position'], function(entity){
-      this.position.x += 10;
-      console.log(this.position.x);
+    m.system('move', ['position'], function(components, entity){
+      console.log(components);
+      components.position.x += 10;
+
+      console.log(components.position.x);
     }, {});
     m.entity('mover', function(entity, data){
       nuclear.component('position').add(entity, data);

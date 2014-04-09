@@ -12,6 +12,8 @@ function Registry() {
   
   this._systemList = [];
   this._systemLength = 0;
+
+  this.rExplicitModuleNotation = rExplicitModuleNotation;
 }
 
 Registry.prototype.import = function registryImport(module) {

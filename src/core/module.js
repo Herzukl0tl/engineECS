@@ -1,10 +1,11 @@
 'use strict';
 
-var Component, Entity, System;
+var Component, Entity, System, registry;
 
 Component = require('./component');
 Entity = require('./entity');
 System = require('./system');
+registry = require('./nuclear.registry');
 
 function Module(name, deps) {
   this.name = name.trim();
@@ -47,7 +48,7 @@ Module.prototype.component = function moduleComponent(name, factory) {
     throw new Error();
   }
 
-  this.components[name] = new Component(name, factory);
+  this.components[name] = new Component(name, factory, this.name);
 
   return this;
 };
@@ -67,13 +68,13 @@ Module.prototype.entity = function moduleEntity(name, factory) {
     throw new Error();
   }
 
-  this.entities[name] = new Entity(name, factory);
+  this.entities[name] = new Entity(name, factory, this.name);
 
   return this;
 };
 
 Module.prototype.system = function moduleSystem(name, components, definition, options) {
-  var system;
+  var system, i, component;
 
   if (arguments.length === 1) {
     system = this.systems[name];
@@ -83,11 +84,18 @@ Module.prototype.system = function moduleSystem(name, components, definition, op
     throw new Error();
   }
 
+  for(i = 0; i < components.length; i++){
+    component = components[i];
+    if (!registry.rExplicitModuleNotation.test(component)) {
+        components[i] = component + ' from ' + this.name;
+    }
+  }
+
   if (name in this.systems) {
     throw new Error();
   }
 
-  this.systems[name] = new System(name, components, definition, options);
+  this.systems[name] = new System(name, components, definition, this.name, options);
 
   return this;
 };

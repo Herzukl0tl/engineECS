@@ -8,12 +8,14 @@ var nuclearEvents = require('./nuclear.events');
  * @param {string} name       The component name
  * @param {function} definition The component function which has to return its instance
  */
-function Component(name, definition) {
+function Component(name, definition, moduleName) {
   this.name = name;
   this.definition = definition;
 
   this._components = Object.create(null);
   this._disabledComponents = Object.create(null);
+
+  this.moduleName = moduleName;
 }
 
 /**
@@ -61,8 +63,8 @@ Component.prototype.add = function ComponentAdd(entity) {
 
   this._components[entity] = component;
 
-  nuclearEvents.trigger('component:add:' + this.name, entity, this.name);
-  nuclearEvents.trigger('component:add', entity, this.name);
+  nuclearEvents.trigger('component:add:' + this.identity(), entity, this.name, this.moduleName);
+  nuclearEvents.trigger('component:add', entity, this.identity(), this.name, this.moduleName);
   
   return component;
 };
@@ -79,8 +81,8 @@ Component.prototype.remove = function ComponentRemove(entity) {
   delete this._components[entity];
   delete this._disabledComponents[entity];
 
-  nuclearEvents.trigger('component:remove:' + this.name, entity, this.name);
-  nuclearEvents.trigger('component:remove', entity, this.name);
+  nuclearEvents.trigger('component:remove:' + this.identity(), entity, this.name, this.moduleName);
+  nuclearEvents.trigger('component:remove', entity, this.identity(), this.name, this.moduleName);
   return true;
 };
 
@@ -99,13 +101,13 @@ Component.prototype.share = function ComponentShare(source, dest) {
     var i;
     for (i = dest.length - 1; i >= 0; i -= 1) {
       this._components[dest[i]] = component;
-      nuclearEvents.trigger('component:add:' + this.name, dest[i], this.name);
-      nuclearEvents.trigger('component:add', dest[i], this.name);
+      nuclearEvents.trigger('component:add:' + this.identity(), dest[i], this.name, this.moduleName);
+      nuclearEvents.trigger('component:add', dest[i], this.identity(), this.name, this.moduleName);
     }
   } else {
     this._components[dest] = component;
-    nuclearEvents.trigger('component:add:' + this.name, dest, this.name);
-    nuclearEvents.trigger('component:add', dest, this.name);
+    nuclearEvents.trigger('component:add:' + this.identity(), dest, this.name, this.moduleName);
+    nuclearEvents.trigger('component:add', dest, this.identity(), this.name, this.moduleName);
   }
 
   return component;
@@ -155,6 +157,15 @@ Component.prototype.isEnabled = function ComponentIsEnabled(id) {
   }
 
   throw new Error();
+};
+
+/**
+ * Return the Component's identity
+ * It containes it's name and it's module's name
+ * @return {String}    The component identity
+ */
+Component.prototype.identity = function ComponentIdentity(){
+  return this.name+' from '+this.moduleName;
 };
 
 module.exports = Component;
