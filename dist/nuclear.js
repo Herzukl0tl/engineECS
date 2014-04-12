@@ -407,7 +407,7 @@ Module.prototype.system = function moduleSystem(name, components, definition, op
 
 module.exports = Module;
 
-},{"./component":2,"./entity":4,"./resolver":13,"./system":14}],7:[function(require,module,exports){
+},{"./component":2,"./entity":4,"./resolver":13,"./system":15}],7:[function(require,module,exports){
 'use strict';
 
 var registry = require('./nuclear.registry'),
@@ -556,7 +556,8 @@ module.exports = new Registry();
 'use strict';
 
 var registry = require('./nuclear.registry'),
-    nuclearEvents = require('./nuclear.events');
+    nuclearEvents = require('./nuclear.events'),
+    context = {};
 
 /**
  * The nuclearSystem method which contains all nuclearSystem definitions
@@ -605,6 +606,13 @@ nuclearSystem.run = function nuclearSystemRun() {
 nuclearSystem.disable = function nuclearSystemDisable(name) {
   var index = registry.systems.indexOf(name);
   registry.systems.splice(index, 1);
+};
+
+/**
+ * Get the global systems context
+ */
+nuclearSystem.context = function nuclearSystemContext() {
+  return context;
 };
 
 module.exports = nuclearSystem;
@@ -782,10 +790,59 @@ resolver.identity = function resolverIdentity(path) {
 },{}],14:[function(require,module,exports){
 'use strict';
 
+function Scheduler(msPerUpdate, extrapolation) {
+  var self = this;
+
+  self.msPerUpdate = msPerUpdate || 0;
+  self.extrapolation = extrapolation || false;
+
+  self.lag = 0;
+  self.previous = 0;
+
+  self.listen();
+}
+
+Scheduler.prototype.run = function schedulerRun(callback) {
+  var current = Date.now();
+  var elapsed = current - this.previous;
+  this.previous = current;
+  this.lag += elapsed;
+  if (this.msPerUpdate > 0) {
+    while (this.lag >= this.msPerUpdate) {
+      callback(1);
+      this.lag -= this.msPerUpdate;
+    }
+    if (this.extrapolation) {
+      callback(this.lag / elapsed);
+      this.lag = 0;
+    }
+  } else {
+    callback(1);
+  }
+};
+
+Scheduler.prototype.start = function schedulerInit() {
+  this.previous = Date.now();
+};
+
+Scheduler.prototype.listen = function schedulerListen(){
+  var self = this;
+
+  window.addEventListener('focus', function () {
+    self.start();
+  });
+};
+
+module.exports = Scheduler;
+
+},{}],15:[function(require,module,exports){
+'use strict';
+
 var nuclearComponent = require('./nuclear.component'),
     nuclearSystem = require('./nuclear.system'),
     nuclearEvents = require('./nuclear.events'),
     resolver = require('./resolver'),
+    Scheduler = require('./scheduler'),
     eventsOptions = {};
 
 /**
@@ -821,8 +878,9 @@ function System(name, components, definition, moduleName, options) {
 
   this._priority = 0;
 
-  // this._scheduler = new Scheduler(options.msPerUpdate, options.strict, options.extrapolation);
-  // this._scheduler.start();
+  this._scheduler = new Scheduler(options.msPerUpdate, options.extrapolation);
+  this._scheduler.start();
+  this._schedulerCallback = systemSchedulerCallback.bind(this);
 
   systemListenComponents(this, this.components);
 
@@ -830,14 +888,7 @@ function System(name, components, definition, moduleName, options) {
     systemDisableSystems(this, options.disable);
   }
 
-  nuclearEvents.on('system:after_running', function () {
-    if (this._sorterManager.toDeferred) {
-      this.entities.sort(this._sorterManager.comparator);
-      this._sorterManager.toDeferred = false;
-    }
-  }, {
-    context: this
-  });
+  this.listen();
 }
 
 /**
@@ -894,41 +945,42 @@ System.prototype.check = function SystemCheck(entity) {
 };
 
 /**
- * Run the system on the selected entity, or on all the entities if no arguments
+ * Run the system on all the entities
+ * @return {System} Return the System itself
+ */
+System.prototype.run = function SystemRun() {
+  var self = this;
+
+  nuclearEvents.trigger('system:before:' + self.identity(), self.entities, self._componentPacks, self.name, self.moduleName);
+
+  if (self._autosortComparator !== null) {
+    self.entities.sort(self._autosortComparator);
+  }
+
+  self._scheduler.run(this._schedulerCallback);
+
+  nuclearEvents.trigger('system:after:' + self.identity(), self.entities, self._componentPacks, self.name, self.moduleName);
+
+  return self;
+};
+
+/**
+ * Run the system on the selected entity
  * @param  {number} entity The selected entity
  * @return {System} Return the System itself
  */
-System.prototype.run = function SystemRun(entity) {
+System.prototype.once = function(entity){
   var self = this;
-  systemParseDeferred(self);
 
-  if (arguments.length === 1) {
-    if (this.entities.indexOf(entity) !== -1) {
-      var componentPack = self._componentPacks[entity];
-      nuclearEvents.trigger('system:before:' + self.identity(), entity, componentPack, self.name, self.moduleName);
-      systemDefinitionRunEntity(self, entity, componentPack);
-      nuclearEvents.trigger('system:after:' + self.identity(), entity, componentPack, self.name, self.moduleName);
-      return true;
-    }
-    return false;
-  } else {
-    nuclearEvents.trigger('system:before:' + self.identity(), self.entities, self._componentPacks, self.name, self.moduleName);
-
-    if (self._autosortComparator !== null) {
-      self.entities.sort(self._autosortComparator);
-    }
-
-    var length = self.entities.length;
-
-    for (var i = 0; i < length; i++) {
-      // self._context._deltaTime = deltaTime;
-      systemDefinitionRunEntity(self, self.entities[i], self._componentPacks[self.entities[i]]);
-    }
-
-    nuclearEvents.trigger('system:after:' + self.identity(), self.entities, self._componentPacks, self.name, self.moduleName);
+  if (this.entities.indexOf(entity) !== -1) {
+    var componentPack = self._componentPacks[entity],
+        toReturn;
+    nuclearEvents.trigger('system:before:' + self.identity(), entity, componentPack, self.name, self.moduleName);
+    toReturn = systemDefinitionRunEntity(self, entity, componentPack);
+    nuclearEvents.trigger('system:after:' + self.identity(), entity, componentPack, self.name, self.moduleName);
+    return toReturn;
   }
-
-  return self;
+  return false;
 };
 
 /**
@@ -975,8 +1027,33 @@ System.prototype.identity = function SystemIdentity(){
   return this.name+' from '+this.moduleName;
 };
 
-function systemDefinitionRunEntity(self, entity, componentPack) {
-  self.definition(componentPack, entity);
+System.prototype.listen = function SystemListen(){
+  var eventsOptions = {
+    context: this
+  };
+
+  nuclearEvents.on('system:after_running', function () {
+    if (this._sorterManager.toDeferred) {
+      this.entities.sort(this._sorterManager.comparator);
+      this._sorterManager.toDeferred = false;
+    }
+  }, eventsOptions);
+
+  nuclearEvents.on('system:before_running', function () {
+    systemParseDeferred(this);
+  }, eventsOptions);
+};
+
+function systemSchedulerCallback(deltaTime){
+  /*jshint validthis:true */
+  var length = this.entities.length;
+  for (var i = 0; i < length; i++) {
+    systemDefinitionRunEntity(this, this.entities[i], this._componentPacks[this.entities[i]], deltaTime);
+  }
+}
+
+function systemDefinitionRunEntity(self, entity, componentPack, deltaTime) {
+  return self.definition(entity, componentPack, nuclearSystem.context(), deltaTime);
 }
 
 function systemParseDeferred(self) {
@@ -1027,7 +1104,7 @@ function systemDisableSystems(self, systems) {
 
 module.exports = System;
 
-},{"./nuclear.component":7,"./nuclear.events":9,"./nuclear.system":11,"./resolver":13}],15:[function(require,module,exports){
+},{"./nuclear.component":7,"./nuclear.events":9,"./nuclear.system":11,"./resolver":13,"./scheduler":14}],16:[function(require,module,exports){
 'use strict';
 
 var pool, watchers;
@@ -1042,7 +1119,7 @@ window.nuclear.import([watchers]);
 window.Pool = pool.Pool;
 window.FixedPool = pool.FixedPool;
 
-},{"./core/index":5,"./modules/core.watchers":16,"./pool":21}],16:[function(require,module,exports){
+},{"./core/index":5,"./modules/core.watchers":17,"./pool":22}],17:[function(require,module,exports){
 'use strict';
 
 var nuclear, WatcherComponent, watchSystem;
@@ -1057,7 +1134,7 @@ module.exports = nuclear.module('core.watchers', [])
   })
   .system('watch', ['watchers'], watchSystem);
 
-},{"./../../core/index":5,"./watch-system":17,"./watcher-component":18}],17:[function(require,module,exports){
+},{"./../../core/index":5,"./watch-system":18,"./watcher-component":19}],18:[function(require,module,exports){
 'use strict';
 
 function watchSystem(e) {
@@ -1080,7 +1157,7 @@ function watchSystem(e) {
 
 module.exports = watchSystem;
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 var nuclear;
@@ -1195,7 +1272,7 @@ WatcherComponent.prototype._unwatch = function _watcherComponentUnwatch(path) {
 
 module.exports = WatcherComponent;
 
-},{"./../../core/index":5}],19:[function(require,module,exports){
+},{"./../../core/index":5}],20:[function(require,module,exports){
 'use strict';
 
 function FixedPool(factory, options) {
@@ -1274,7 +1351,7 @@ FixedPool.defaults = {
 
 module.exports = FixedPool;
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 function Pool(factory, options) {
@@ -1367,10 +1444,10 @@ Pool.defaults = {
 
 module.exports = Pool;
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 exports.Pool = require('./Pool');
 exports.FixedPool = require('./FixedPool');
 
-},{"./FixedPool":19,"./Pool":20}]},{},[15]);
+},{"./FixedPool":20,"./Pool":21}]},{},[16]);
