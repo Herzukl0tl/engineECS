@@ -35,7 +35,7 @@ Component.prototype.of = function ComponentOf(entity, options) {
   var component = this._components[entity] || this._disabledComponents[entity];
 
   if (arguments.length === 2) {
-    if (!this. in (entity)) {
+    if (!this.in(entity)) {
       if (options.required) throw new Error();
       else if (options.add) component = this.add(entity);
     }
@@ -49,7 +49,7 @@ Component.prototype.of = function ComponentOf(entity, options) {
  * @param  {number} entity The entity to test
  * @return {boolean}        True if the entity has it, fals if it hasn't
  */
-Component.prototype. in = function ComponentIn(entity) {
+Component.prototype.in = function ComponentIn(entity) {
   return entity in this._components || entity in this._disabledComponents;
 };
 
@@ -69,7 +69,7 @@ Component.prototype.add = function ComponentAdd(entity) {
 
   nuclearEvents.trigger('component:add:' + this.identity(), entity, this.name, this.moduleName);
   nuclearEvents.trigger('component:add', entity, this.identity(), this.name, this.moduleName);
-  
+
   return component;
 };
 
@@ -127,7 +127,9 @@ Component.prototype.disable = function ComponentDisable(id) {
     this._disabledComponents[id] = this._components[id];
     delete this._components[id];
 
-    nuclearEvents.trigger('component:disable:' + this.name, id, this.name);
+    nuclearEvents.trigger('component:disable:' + this.identity(), id, this.name, this.moduleName);
+    nuclearEvents.trigger('component:disable', id, this.identity(), this.name, this.moduleName);
+
     return true;
   }
   return false;
@@ -143,7 +145,9 @@ Component.prototype.enable = function ComponentEnable(id) {
     this._components[id] = this._disabledComponents[id];
     delete this._disabledComponents[id];
 
-    nuclearEvents.trigger('component:enable:' + this.name, id, this.name);
+    nuclearEvents.trigger('component:enable:' + this.identity(), id, this.name, this.moduleName);
+    nuclearEvents.trigger('component:enable', id, this.identity(), this.name, this.moduleName);
+
     return true;
   }
   return false;
@@ -296,12 +300,12 @@ nuclear.import = function nuclearImport(modules) {
 },{"./module":6,"./nuclear.component":7,"./nuclear.entity":8,"./nuclear.events":9,"./nuclear.registry":10,"./nuclear.system":11}],6:[function(require,module,exports){
 'use strict';
 
-var Component, Entity, System, registry;
+var Component, Entity, System, resolver;
 
 Component = require('./component');
 Entity = require('./entity');
 System = require('./system');
-registry = require('./nuclear.registry');
+resolver = require('./resolver');
 
 function Module(name, deps) {
   this.name = name.trim();
@@ -370,7 +374,7 @@ Module.prototype.entity = function moduleEntity(name, factory) {
 };
 
 Module.prototype.system = function moduleSystem(name, components, definition, options) {
-  var system, i, component;
+  var system, i, length, component;
 
   if (arguments.length === 1) {
     system = this.systems[name];
@@ -380,15 +384,20 @@ Module.prototype.system = function moduleSystem(name, components, definition, op
     throw new Error();
   }
 
-  for(i = 0; i < components.length; i++){
-    component = components[i];
-    if (!registry.rExplicitModuleNotation.test(component)) {
-        components[i] = component + ' from ' + this.name;
-    }
-  }
-
   if (name in this.systems) {
     throw new Error();
+  }
+
+  length = components.length;
+
+  for(i = 0; i < length; i += 1) {
+    component = components[i];
+
+    if (resolver.module(component) === '') {
+      components[i] = resolver.module(component, this.name);
+    }
+
+    console.log('component', components[i]);
   }
 
   this.systems[name] = new System(name, components, definition, this.name, options);
@@ -398,7 +407,7 @@ Module.prototype.system = function moduleSystem(name, components, definition, op
 
 module.exports = Module;
 
-},{"./component":2,"./entity":4,"./nuclear.registry":10,"./system":13}],7:[function(require,module,exports){
+},{"./component":2,"./entity":4,"./resolver":13,"./system":14}],7:[function(require,module,exports){
 'use strict';
 
 var registry = require('./nuclear.registry'),
@@ -603,20 +612,18 @@ module.exports = nuclearSystem;
 },{"./nuclear.events":9,"./nuclear.registry":10}],12:[function(require,module,exports){
 'use strict';
 
-var rExplicitModuleNotation;
+var resolver;
 
-rExplicitModuleNotation = /([^\s]+)\s+from\s+([^\s]+)/;
+resolver = require('./resolver');
 
 function Registry() {
   this.modules = Object.create(null);
   this.components = Object.create(null);
   this.entities = Object.create(null);
   this.systems = Object.create(null);
-  
+
   this._systemList = [];
   this._systemLength = 0;
-
-  this.rExplicitModuleNotation = rExplicitModuleNotation;
 }
 
 Registry.prototype.import = function registryImport(module) {
@@ -675,10 +682,10 @@ Registry.prototype.module = function registryModule(name) {
 };
 
 Registry.prototype.component = function registryComponent(name) {
-  var component;
+  var component, moduleName;
 
-  if (rExplicitModuleNotation.test(name)) {
-    return this.module(RegExp.$2).component(RegExp.$1);
+  if ((moduleName = resolver.module(name))) {
+    return this.module(moduleName).component(resolver.name(name));
   }
 
   component = this.components[name];
@@ -689,10 +696,10 @@ Registry.prototype.component = function registryComponent(name) {
 };
 
 Registry.prototype.entity = function registryEntity(name) {
-  var entity;
+  var entity, moduleName;
 
-  if (rExplicitModuleNotation.test(name)) {
-    return this.module(RegExp.$2).entity(RegExp.$1);
+  if ((moduleName = resolver.module(name))) {
+    return this.module(moduleName).entity(resolver.name(name));
   }
 
   entity = this.entities[name];
@@ -703,10 +710,10 @@ Registry.prototype.entity = function registryEntity(name) {
 };
 
 Registry.prototype.system = function registrySystem(name) {
-  var system;
+  var system, moduleName;
 
-  if (rExplicitModuleNotation.test(name)) {
-    return this.module(RegExp.$2).system(RegExp.$1);
+  if ((moduleName = resolver.module(name))) {
+    return this.module(moduleName).system(resolver.name(name));
   }
 
   system = this.systems[name];
@@ -718,12 +725,67 @@ Registry.prototype.system = function registrySystem(name) {
 
 module.exports = Registry;
 
-},{}],13:[function(require,module,exports){
+},{"./resolver":13}],13:[function(require,module,exports){
+'use strict';
+
+var resolver, rValidPath;
+
+module.exports = resolver = {};
+rValidPath = /^([^\s]+)((?:\s+from\s+([^\s]+))?(?:\s+as\s+([^\s]+))?)$/;
+
+resolver.validate = function resolverValidate(path) {
+  if (!rValidPath.test(path)) {
+    throw new Error();
+  }
+};
+
+resolver.name = function resolverName(path, value) {
+  this.validate(path);
+
+  if (arguments.length === 1) {
+    return RegExp.$1 || path;
+  }
+
+  return RegExp.$2 && value + RegExp.$2 || value;
+};
+
+resolver.alias = function resolverAlias(path, value) {
+  this.validate(path);
+
+  if (arguments.length === 1) {
+    return RegExp.$4 || '';
+  }
+
+  return RegExp.$1 + (RegExp.$3 ? ' from ' + RegExp.$3 : '') + ' as ' + value;
+};
+
+resolver.module = function resolverModule(path, value) {
+  this.validate(path);
+
+  if (arguments.length === 1) {
+    return RegExp.$3 || '';
+  }
+
+  return RegExp.$1 + ' from ' + value + (RegExp.$4 ? ' as ' + RegExp.$4 : '');
+};
+
+resolver.identity = function resolverIdentity(path) {
+  this.validate(path);
+
+  if (RegExp.$1 && RegExp.$3) {
+    return RegExp.$1 + ' from ' + RegExp.$3;
+  }
+
+  throw new Error();
+};
+
+},{}],14:[function(require,module,exports){
 'use strict';
 
 var nuclearComponent = require('./nuclear.component'),
     nuclearSystem = require('./nuclear.system'),
     nuclearEvents = require('./nuclear.events'),
+    resolver = require('./resolver'),
     eventsOptions = {};
 
 /**
@@ -735,10 +797,14 @@ var nuclearComponent = require('./nuclear.component'),
  */
 function System(name, components, definition, moduleName, options) {
   options = options || {};
-  
+
   this.name = name;
   this.definition = definition;
-  this.components = components;
+
+  this.components = components.map(resolver.identity, resolver);
+  this.aliases = components.map(function (path) {
+    return resolver.alias(path) || resolver.name(path);
+  });
   this.moduleName = moduleName;
 
   this._context = Object.create(options.context || null);
@@ -758,7 +824,7 @@ function System(name, components, definition, moduleName, options) {
   // this._scheduler = new Scheduler(options.msPerUpdate, options.strict, options.extrapolation);
   // this._scheduler.start();
 
-  systemListenComponents(this, components);
+  systemListenComponents(this, this.components);
 
   if (options.disable !== undefined) {
     systemDisableSystems(this, options.disable);
@@ -815,13 +881,13 @@ System.prototype.remove = function SystemRemove(entity) {
 System.prototype.check = function SystemCheck(entity) {
   var componentPack = Object.create(null),
       i, comp;
-      
+
   for (i = this.components.length - 1; i >= 0; i--) {
     comp = nuclearComponent(this.components[i]).of(entity);
-    
+
     if (comp === undefined) return null;
-    
-    componentPack[this.components[i]] = comp;
+
+    componentPack[this.aliases[i]] = comp;
   }
 
   return componentPack;
@@ -917,13 +983,13 @@ function systemParseDeferred(self) {
   var entity;
   for (var i = 0; i < self._deferredEntities.length; i++) {
     entity = self._deferredEntities[i];
+
     if (self._removeEntities[entity] !== undefined) {
       self.remove(entity);
       delete self._removeEntities[entity];
-      continue;
+    } else {
+      self.add(entity);
     }
-
-    self.add(entity);
   }
 
   self._deferredEntities.length = 0;
@@ -943,11 +1009,11 @@ function systemListenComponents(self, components) {
       i;
 
   options.context = self;
-      
+
   for (i = 0; i < components.length; i++) {
     nuclearEvents.on('component:add:' + components[i], systemAddToDeferred, options);
     nuclearEvents.on('component:enable:' + components[i], systemAddToDeferred, options);
-     
+
     nuclearEvents.on('component:remove:' + components[i], systemAddToDeferredAndRemove, options);
     nuclearEvents.on('component:disable:' + components[i], systemAddToDeferredAndRemove, options);
   }
@@ -961,7 +1027,7 @@ function systemDisableSystems(self, systems) {
 
 module.exports = System;
 
-},{"./nuclear.component":7,"./nuclear.events":9,"./nuclear.system":11}],14:[function(require,module,exports){
+},{"./nuclear.component":7,"./nuclear.events":9,"./nuclear.system":11,"./resolver":13}],15:[function(require,module,exports){
 'use strict';
 
 var pool, watchers;
@@ -976,7 +1042,7 @@ window.nuclear.import([watchers]);
 window.Pool = pool.Pool;
 window.FixedPool = pool.FixedPool;
 
-},{"./core/index":5,"./modules/core.watchers":15,"./pool":20}],15:[function(require,module,exports){
+},{"./core/index":5,"./modules/core.watchers":16,"./pool":21}],16:[function(require,module,exports){
 'use strict';
 
 var nuclear, WatcherComponent, watchSystem;
@@ -991,7 +1057,7 @@ module.exports = nuclear.module('core.watchers', [])
   })
   .system('watch', ['watchers'], watchSystem);
 
-},{"./../../core/index":5,"./watch-system":16,"./watcher-component":17}],16:[function(require,module,exports){
+},{"./../../core/index":5,"./watch-system":17,"./watcher-component":18}],17:[function(require,module,exports){
 'use strict';
 
 function watchSystem(e) {
@@ -1014,7 +1080,7 @@ function watchSystem(e) {
 
 module.exports = watchSystem;
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 var nuclear;
@@ -1129,7 +1195,7 @@ WatcherComponent.prototype._unwatch = function _watcherComponentUnwatch(path) {
 
 module.exports = WatcherComponent;
 
-},{"./../../core/index":5}],18:[function(require,module,exports){
+},{"./../../core/index":5}],19:[function(require,module,exports){
 'use strict';
 
 function FixedPool(factory, options) {
@@ -1208,7 +1274,7 @@ FixedPool.defaults = {
 
 module.exports = FixedPool;
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 function Pool(factory, options) {
@@ -1301,10 +1367,10 @@ Pool.defaults = {
 
 module.exports = Pool;
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 exports.Pool = require('./Pool');
 exports.FixedPool = require('./FixedPool');
 
-},{"./FixedPool":18,"./Pool":19}]},{},[14]);
+},{"./FixedPool":19,"./Pool":20}]},{},[15]);

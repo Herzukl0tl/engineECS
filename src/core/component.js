@@ -31,7 +31,7 @@ Component.prototype.of = function ComponentOf(entity, options) {
   var component = this._components[entity] || this._disabledComponents[entity];
 
   if (arguments.length === 2) {
-    if (!this. in (entity)) {
+    if (!this.in(entity)) {
       if (options.required) throw new Error();
       else if (options.add) component = this.add(entity);
     }
@@ -45,7 +45,7 @@ Component.prototype.of = function ComponentOf(entity, options) {
  * @param  {number} entity The entity to test
  * @return {boolean}        True if the entity has it, fals if it hasn't
  */
-Component.prototype. in = function ComponentIn(entity) {
+Component.prototype.in = function ComponentIn(entity) {
   return entity in this._components || entity in this._disabledComponents;
 };
 
@@ -65,7 +65,7 @@ Component.prototype.add = function ComponentAdd(entity) {
 
   nuclearEvents.trigger('component:add:' + this.identity(), entity, this.name, this.moduleName);
   nuclearEvents.trigger('component:add', entity, this.identity(), this.name, this.moduleName);
-  
+
   return component;
 };
 
@@ -123,7 +123,9 @@ Component.prototype.disable = function ComponentDisable(id) {
     this._disabledComponents[id] = this._components[id];
     delete this._components[id];
 
-    nuclearEvents.trigger('component:disable:' + this.name, id, this.name);
+    nuclearEvents.trigger('component:disable:' + this.identity(), id, this.name, this.moduleName);
+    nuclearEvents.trigger('component:disable', id, this.identity(), this.name, this.moduleName);
+
     return true;
   }
   return false;
@@ -139,7 +141,9 @@ Component.prototype.enable = function ComponentEnable(id) {
     this._components[id] = this._disabledComponents[id];
     delete this._disabledComponents[id];
 
-    nuclearEvents.trigger('component:enable:' + this.name, id, this.name);
+    nuclearEvents.trigger('component:enable:' + this.identity(), id, this.name, this.moduleName);
+    nuclearEvents.trigger('component:enable', id, this.identity(), this.name, this.moduleName);
+
     return true;
   }
   return false;

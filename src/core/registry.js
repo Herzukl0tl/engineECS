@@ -1,19 +1,17 @@
 'use strict';
 
-var rExplicitModuleNotation;
+var resolver;
 
-rExplicitModuleNotation = /([^\s]+)\s+from\s+([^\s]+)/;
+resolver = require('./resolver');
 
 function Registry() {
   this.modules = Object.create(null);
   this.components = Object.create(null);
   this.entities = Object.create(null);
   this.systems = Object.create(null);
-  
+
   this._systemList = [];
   this._systemLength = 0;
-
-  this.rExplicitModuleNotation = rExplicitModuleNotation;
 }
 
 Registry.prototype.import = function registryImport(module) {
@@ -72,10 +70,10 @@ Registry.prototype.module = function registryModule(name) {
 };
 
 Registry.prototype.component = function registryComponent(name) {
-  var component;
+  var component, moduleName;
 
-  if (rExplicitModuleNotation.test(name)) {
-    return this.module(RegExp.$2).component(RegExp.$1);
+  if ((moduleName = resolver.module(name))) {
+    return this.module(moduleName).component(resolver.name(name));
   }
 
   component = this.components[name];
@@ -86,10 +84,10 @@ Registry.prototype.component = function registryComponent(name) {
 };
 
 Registry.prototype.entity = function registryEntity(name) {
-  var entity;
+  var entity, moduleName;
 
-  if (rExplicitModuleNotation.test(name)) {
-    return this.module(RegExp.$2).entity(RegExp.$1);
+  if ((moduleName = resolver.module(name))) {
+    return this.module(moduleName).entity(resolver.name(name));
   }
 
   entity = this.entities[name];
@@ -100,10 +98,10 @@ Registry.prototype.entity = function registryEntity(name) {
 };
 
 Registry.prototype.system = function registrySystem(name) {
-  var system;
+  var system, moduleName;
 
-  if (rExplicitModuleNotation.test(name)) {
-    return this.module(RegExp.$2).system(RegExp.$1);
+  if ((moduleName = resolver.module(name))) {
+    return this.module(moduleName).system(resolver.name(name));
   }
 
   system = this.systems[name];

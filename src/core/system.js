@@ -3,6 +3,7 @@
 var nuclearComponent = require('./nuclear.component'),
     nuclearSystem = require('./nuclear.system'),
     nuclearEvents = require('./nuclear.events'),
+    resolver = require('./resolver'),
     eventsOptions = {};
 
 /**
@@ -14,10 +15,14 @@ var nuclearComponent = require('./nuclear.component'),
  */
 function System(name, components, definition, moduleName, options) {
   options = options || {};
-  
+
   this.name = name;
   this.definition = definition;
-  this.components = components;
+
+  this.components = components.map(resolver.identity, resolver);
+  this.aliases = components.map(function (path) {
+    return resolver.alias(path) || resolver.name(path);
+  });
   this.moduleName = moduleName;
 
   this._context = Object.create(options.context || null);
@@ -37,7 +42,7 @@ function System(name, components, definition, moduleName, options) {
   // this._scheduler = new Scheduler(options.msPerUpdate, options.strict, options.extrapolation);
   // this._scheduler.start();
 
-  systemListenComponents(this, components);
+  systemListenComponents(this, this.components);
 
   if (options.disable !== undefined) {
     systemDisableSystems(this, options.disable);
@@ -94,13 +99,13 @@ System.prototype.remove = function SystemRemove(entity) {
 System.prototype.check = function SystemCheck(entity) {
   var componentPack = Object.create(null),
       i, comp;
-      
+
   for (i = this.components.length - 1; i >= 0; i--) {
     comp = nuclearComponent(this.components[i]).of(entity);
-    
+
     if (comp === undefined) return null;
-    
-    componentPack[this.components[i]] = comp;
+
+    componentPack[this.aliases[i]] = comp;
   }
 
   return componentPack;
@@ -196,13 +201,13 @@ function systemParseDeferred(self) {
   var entity;
   for (var i = 0; i < self._deferredEntities.length; i++) {
     entity = self._deferredEntities[i];
+
     if (self._removeEntities[entity] !== undefined) {
       self.remove(entity);
       delete self._removeEntities[entity];
-      continue;
+    } else {
+      self.add(entity);
     }
-
-    self.add(entity);
   }
 
   self._deferredEntities.length = 0;
@@ -222,11 +227,11 @@ function systemListenComponents(self, components) {
       i;
 
   options.context = self;
-      
+
   for (i = 0; i < components.length; i++) {
     nuclearEvents.on('component:add:' + components[i], systemAddToDeferred, options);
     nuclearEvents.on('component:enable:' + components[i], systemAddToDeferred, options);
-     
+
     nuclearEvents.on('component:remove:' + components[i], systemAddToDeferredAndRemove, options);
     nuclearEvents.on('component:disable:' + components[i], systemAddToDeferredAndRemove, options);
   }

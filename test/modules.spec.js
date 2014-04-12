@@ -56,7 +56,7 @@ describe('Nuclear modules', function () {
     });
 
     it('should define a system', function () {
-      myModule.system('my-system', function () {});
+      myModule.system('my-system', [], function () {});
 
       expect(myModule.system('my-system')).toEqual(jasmine.any(System));
       expect(myModule.system('my-system')).toBe(myModule.systems['my-system']);
