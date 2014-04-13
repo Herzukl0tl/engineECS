@@ -1,10 +1,11 @@
 'use strict';
 
-var EntityIdGenerator, entityIdGenerator, nuclearEvents;
+var EntityIdGenerator, entityIdGenerator, nuclearEvents, registry;
 
 EntityIdGenerator = require('./entity-id-generator');
 entityIdGenerator = new EntityIdGenerator();
 nuclearEvents = require('./nuclear.events');
+registry = require('./nuclear.registry');
 
 /**
  * The Entity constructor
@@ -51,11 +52,20 @@ Entity.prototype.enhance = function entityEnhance(entity, data) {
 
 /**
  * Return the Entity's identity
- * It containes it's name and it's module's name
+ * It contains it's name and it's module's name
  * @return {String}    The Entity identity
  */
 Entity.prototype.identity = function entityIdentity(){
   return this.name+' from '+this.moduleName;
+};
+
+/**
+ * Aliases this Entity with the alias param
+ * @return {Entity}    The Entity
+ */
+Entity.prototype.alias = function nuclearEntityAlias(alias){
+  registry.entities[alias] = this;
+  return this;
 };
 
 module.exports = Entity;

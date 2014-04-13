@@ -3,8 +3,10 @@
 var nuclearComponent = require('./nuclear.component'),
     nuclearSystem = require('./nuclear.system'),
     nuclearEvents = require('./nuclear.events'),
+    nuclearQuery = require('./nuclear.query'),
     resolver = require('./resolver'),
-    eventsOptions = {};
+    Scheduler = require('./scheduler'),
+    registry = require('./nuclear.registry');
 
 /**
  * The System constructor
@@ -25,128 +27,73 @@ function System(name, components, definition, moduleName, options) {
   });
   this.moduleName = moduleName;
 
-  this._context = Object.create(options.context || null);
-
-  this.entities = [];
-  this._deferredEntities = [];
   this._sorterManager = Object.create({
     comparator: function () {},
     toDeferred: false
   });
 
   this._componentPacks = Object.create(null);
-  this._removeEntities = Object.create(null);
 
   this._priority = 0;
 
-  // this._scheduler = new Scheduler(options.msPerUpdate, options.strict, options.extrapolation);
-  // this._scheduler.start();
-
-  systemListenComponents(this, this.components);
-
+  this._scheduler = new Scheduler(options.msPerUpdate, options.extrapolation);
+  this._scheduler.start();
+  this._schedulerCallback = systemSchedulerCallback.bind(this);
+  
   if (options.disable !== undefined) {
     systemDisableSystems(this, options.disable);
   }
 
-  nuclearEvents.on('system:after_running', function () {
-    if (this._sorterManager.toDeferred) {
-      this.entities.sort(this._sorterManager.comparator);
-      this._sorterManager.toDeferred = false;
-    }
-  }, {
-    context: this
-  });
+  systemListen(this);
+  systemGenerateQuery(this);
 }
-
-/**
- * Check if the entity parameter is valid for this system
- * If No : return false
- * If Yes : add the entity to the entities list of the system, and return true
- * @param {number} entity The entity to add
- */
-System.prototype.add = function SystemAdd(entity) {
-  if (this.entities.indexOf(entity) > -1) return false;
-
-  var componentPack = this.check(entity);
-  if (componentPack === null) return false;
-
-  this.entities.push(entity);
-  this._componentPacks[entity] = componentPack;
-
-  return true;
-};
-
-/**
- * Remove the selected entity frome the system garbage list
- * @param  {number} entity The selected entity
- * @return {boolean}        If the entity is in the system, it returns true, in other case, it returns false
- */
-System.prototype.remove = function SystemRemove(entity) {
-  var index = this.entities.indexOf(parseInt(entity));
-  if (index < 0) return false;
-
-  this.entities.splice(index, 1);
-  delete this._componentPacks[entity];
-
-  return true;
-};
 
 /**
  * Check if an entity is runnable by the system
  * @param  {number} entity The selected entity
  * @return {null/object}   Return null if the entity isn't runnable, return its components in other case
  */
-System.prototype.check = function SystemCheck(entity) {
-  var componentPack = Object.create(null),
-      i, comp;
-
-  for (i = this.components.length - 1; i >= 0; i--) {
-    comp = nuclearComponent(this.components[i]).of(entity);
-
-    if (comp === undefined) return null;
-
-    componentPack[this.aliases[i]] = comp;
-  }
-
-  return componentPack;
+System.prototype.check = function SystemDefinitionCheck(entity) {
+  return (this._componentPacks[entity] !== undefined);
 };
 
 /**
- * Run the system on the selected entity, or on all the entities if no arguments
+ * Run the system on all the entities
+ * @return {System} Return the System itself
+ */
+System.prototype.run = function SystemRun() {
+  var self = this;
+
+  nuclearEvents.trigger('system:before:' + self.identity(), self.entities, self._componentPacks, self.name, self.moduleName);
+
+  if (self._autosortComparator !== null) {
+    self.entities.sort(self._autosortComparator);
+  }
+
+  self._scheduler.run(this._schedulerCallback);
+
+  nuclearEvents.trigger('system:after:' + self.identity(), self.entities, self._componentPacks, self.name, self.moduleName);
+
+  return self;
+};
+
+/**
+ * Run the system on the selected entity
  * @param  {number} entity The selected entity
  * @return {System} Return the System itself
  */
-System.prototype.run = function SystemRun(entity) {
+System.prototype.once = function(entity){
   var self = this;
-  systemParseDeferred(self);
 
-  if (arguments.length === 1) {
-    if (this.entities.indexOf(entity) !== -1) {
-      var componentPack = self._componentPacks[entity];
-      nuclearEvents.trigger('system:before:' + self.identity(), entity, componentPack, self.name, self.moduleName);
-      systemDefinitionRunEntity(self, entity, componentPack);
-      nuclearEvents.trigger('system:after:' + self.identity(), entity, componentPack, self.name, self.moduleName);
-      return true;
-    }
-    return false;
-  } else {
-    nuclearEvents.trigger('system:before:' + self.identity(), self.entities, self._componentPacks, self.name, self.moduleName);
-
-    if (self._autosortComparator !== null) {
-      self.entities.sort(self._autosortComparator);
-    }
-
-    var length = self.entities.length;
-
-    for (var i = 0; i < length; i++) {
-      // self._context._deltaTime = deltaTime;
-      systemDefinitionRunEntity(self, self.entities[i], self._componentPacks[self.entities[i]]);
-    }
-
-    nuclearEvents.trigger('system:after:' + self.identity(), self.entities, self._componentPacks, self.name, self.moduleName);
+  if (this.entities.indexOf(entity) !== -1) {
+    var componentPack = self._componentPacks[entity],
+        toReturn;
+    nuclearEvents.trigger('system:before:' + self.identity(), entity, componentPack, self.name, self.moduleName);
+    toReturn = systemRunEntity(self, entity, componentPack);
+    nuclearEvents.trigger('system:after:' + self.identity(), entity, componentPack, self.name, self.moduleName);
+    return toReturn;
   }
-
-  return self;
+  return false;
 };
 
 /**
@@ -172,16 +119,9 @@ System.prototype.autosort = function SystemAutoSort(comparator) {
     return this._autosortComparator;
   }
 
-  this._autosortComparator = comparator.bind(this._context);
+  this._autosortComparator = comparator;
 
   return this;
-};
-
-/**
- * Refresh the system entities list
- */
-System.prototype.refresh = function SystemRefresh() {
-  systemParseDeferred(this);
 };
 
 /**
@@ -193,48 +133,77 @@ System.prototype.identity = function SystemIdentity(){
   return this.name+' from '+this.moduleName;
 };
 
-function systemDefinitionRunEntity(self, entity, componentPack) {
-  self.definition(componentPack, entity);
-}
+/**
+ * Aliases this System with the alias param
+ * @return {System}    The System
+ */
+System.prototype.alias = function nuclearEntityAlias(alias){
+  registry.components[alias] = this;
+  return this;
+};
 
-function systemParseDeferred(self) {
-  var entity;
-  for (var i = 0; i < self._deferredEntities.length; i++) {
-    entity = self._deferredEntities[i];
+function systemGenerateQuery(self){
+  var query, i, component;
 
-    if (self._removeEntities[entity] !== undefined) {
-      self.remove(entity);
-      delete self._removeEntities[entity];
-    } else {
-      self.add(entity);
+  query = '';
+  for(i = 0; i < self.components.length; i++){
+    component = self.components[i];
+    query += component;
+
+    if(i !== self.components.length-1){
+      query += ' ';
     }
   }
-
-  self._deferredEntities.length = 0;
+  self.query = nuclearQuery.live(query);
+  self.entities = self.query.entities;
+  self.query.listen(systemQueryUpdate.bind(self));
 }
 
-function systemAddToDeferred(entity) {
-  this._deferredEntities.push(entity);// jshint ignore:line
-}
-
-function systemAddToDeferredAndRemove(entity, componentName) {
-  this._deferredEntities.push(entity);// jshint ignore:line
-  this._removeEntities[entity] = componentName;// jshint ignore:line
-}
-
-function systemListenComponents(self, components) {
-  var options = eventsOptions,
-      i;
-
-  options.context = self;
-
-  for (i = 0; i < components.length; i++) {
-    nuclearEvents.on('component:add:' + components[i], systemAddToDeferred, options);
-    nuclearEvents.on('component:enable:' + components[i], systemAddToDeferred, options);
-
-    nuclearEvents.on('component:remove:' + components[i], systemAddToDeferredAndRemove, options);
-    nuclearEvents.on('component:disable:' + components[i], systemAddToDeferredAndRemove, options);
+function systemQueryUpdate(entity, state){
+  /*jshint validthis:true */
+  if(state){
+    this.componentPacks[entity] = systemGeneratePack(this, entity);
   }
+  else{
+    delete this.componentPacks[entity];
+  }
+}
+
+function systemGeneratePack(self, entity){
+  var i, component, componentPack;
+
+  for (i = self.components.length - 1; i >= 0; i--) {
+    component = nuclearComponent(self.components[i]).of(entity);
+    if (component === undefined) return null;
+    componentPack[self.components[i]] = component;
+  }
+
+  return componentPack;
+}
+
+function systemListen(self){
+  var eventsOptions = {
+    context: self
+  };
+
+  nuclearEvents.on('system:after_running', function () {
+    if (self._sorterManager.toDeferred) {
+      self.entities.sort(self._sorterManager.comparator);
+      self._sorterManager.toDeferred = false;
+    }
+  }, eventsOptions);
+}
+
+function systemSchedulerCallback(deltaTime){
+  /*jshint validthis:true */
+  var length = this.entities.length;
+  for (var i = 0; i < length; i++) {
+    systemRunEntity(this, this.entities[i], this._componentPacks[this.entities[i]], deltaTime);
+  }
+}
+
+function systemRunEntity(self, entity, componentPack, deltaTime) {
+  return self.definition(entity, componentPack, nuclearSystem.context(), deltaTime);
 }
 
 function systemDisableSystems(self, systems) {

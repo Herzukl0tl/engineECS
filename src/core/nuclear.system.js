@@ -1,7 +1,8 @@
 'use strict';
 
 var registry = require('./nuclear.registry'),
-    nuclearEvents = require('./nuclear.events');
+    nuclearEvents = require('./nuclear.events'),
+    context = {};
 
 /**
  * The nuclearSystem method which contains all nuclearSystem definitions
@@ -50,6 +51,13 @@ nuclearSystem.run = function nuclearSystemRun() {
 nuclearSystem.disable = function nuclearSystemDisable(name) {
   var index = registry.systems.indexOf(name);
   registry.systems.splice(index, 1);
+};
+
+/**
+ * Get the global systems context
+ */
+nuclearSystem.context = function nuclearSystemContext() {
+  return context;
 };
 
 module.exports = nuclearSystem;
