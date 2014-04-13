@@ -4,7 +4,8 @@
 },{}],2:[function(require,module,exports){
 'use strict';
 
-var nuclearEvents = require('./nuclear.events');
+var nuclearEvents = require('./nuclear.events'),
+    registry = require('./nuclear.registry');
 
 /**
  * Component constructor
@@ -176,9 +177,17 @@ Component.prototype.identity = function ComponentIdentity(){
   return this.name+' from '+this.moduleName;
 };
 
+/**
+ * Aliases this Component with the alias param
+ * @return {Component}    The Component
+ */
+Component.prototype.alias = function nuclearEntityAlias(alias){
+  registry.components[alias] = this;
+  return this;
+};
 module.exports = Component;
 
-},{"./nuclear.events":9}],3:[function(require,module,exports){
+},{"./nuclear.events":9,"./nuclear.registry":11}],3:[function(require,module,exports){
 'use strict';
 
 function EntityIdGenerator(seed) {
@@ -200,11 +209,12 @@ module.exports = EntityIdGenerator;
 },{}],4:[function(require,module,exports){
 'use strict';
 
-var EntityIdGenerator, entityIdGenerator, nuclearEvents;
+var EntityIdGenerator, entityIdGenerator, nuclearEvents, registry;
 
 EntityIdGenerator = require('./entity-id-generator');
 entityIdGenerator = new EntityIdGenerator();
 nuclearEvents = require('./nuclear.events');
+registry = require('./nuclear.registry');
 
 /**
  * The Entity constructor
@@ -251,16 +261,25 @@ Entity.prototype.enhance = function entityEnhance(entity, data) {
 
 /**
  * Return the Entity's identity
- * It containes it's name and it's module's name
+ * It contains it's name and it's module's name
  * @return {String}    The Entity identity
  */
 Entity.prototype.identity = function entityIdentity(){
   return this.name+' from '+this.moduleName;
 };
 
+/**
+ * Aliases this Entity with the alias param
+ * @return {Entity}    The Entity
+ */
+Entity.prototype.alias = function nuclearEntityAlias(alias){
+  registry.entities[alias] = this;
+  return this;
+};
+
 module.exports = Entity;
 
-},{"./entity-id-generator":3,"./nuclear.events":9}],5:[function(require,module,exports){
+},{"./entity-id-generator":3,"./nuclear.events":9,"./nuclear.registry":11}],5:[function(require,module,exports){
 'use strict';
 
 var nuclear, Module;
@@ -297,7 +316,7 @@ nuclear.import = function nuclearImport(modules) {
   }
 };
 
-},{"./module":6,"./nuclear.component":7,"./nuclear.entity":8,"./nuclear.events":9,"./nuclear.registry":10,"./nuclear.system":11}],6:[function(require,module,exports){
+},{"./module":6,"./nuclear.component":7,"./nuclear.entity":8,"./nuclear.events":9,"./nuclear.registry":11,"./nuclear.system":12}],6:[function(require,module,exports){
 'use strict';
 
 var Component, Entity, System, resolver;
@@ -407,7 +426,7 @@ Module.prototype.system = function moduleSystem(name, components, definition, op
 
 module.exports = Module;
 
-},{"./component":2,"./entity":4,"./resolver":13,"./system":15}],7:[function(require,module,exports){
+},{"./component":2,"./entity":4,"./resolver":14,"./system":16}],7:[function(require,module,exports){
 'use strict';
 
 var registry = require('./nuclear.registry'),
@@ -452,7 +471,7 @@ nuclearEvents.on('component:add', linkComponent);
 nuclearEvents.on('component:remove', unLinkComponent);
 
 module.exports = nuclearComponent;
-},{"./nuclear.events":9,"./nuclear.registry":10}],8:[function(require,module,exports){
+},{"./nuclear.events":9,"./nuclear.registry":11}],8:[function(require,module,exports){
 'use strict';
 
 var registry = require('./nuclear.registry'),
@@ -534,7 +553,7 @@ nuclearEntity.create = function nuclearEntityCreate(options){
 
 module.exports = nuclearEntity;
 
-},{"./entity":4,"./nuclear.component":7,"./nuclear.events":9,"./nuclear.registry":10}],9:[function(require,module,exports){
+},{"./entity":4,"./nuclear.component":7,"./nuclear.events":9,"./nuclear.registry":11}],9:[function(require,module,exports){
 'use strict';
 
 var EventsEmitter;
@@ -546,13 +565,24 @@ module.exports = new EventsEmitter();
 },{"../../lib/events-emitter.min":1}],10:[function(require,module,exports){
 'use strict';
 
+function nuclearQuery() {}
+
+nuclearQuery.raw = function nuclearQueryRaw() {};
+
+nuclearQuery.live = function nuclearQueryLive() {};
+
+module.exports = nuclearQuery;
+
+},{}],11:[function(require,module,exports){
+'use strict';
+
 var Registry;
 
 Registry = require('./registry');
 
 module.exports = new Registry();
 
-},{"./registry":12}],11:[function(require,module,exports){
+},{"./registry":13}],12:[function(require,module,exports){
 'use strict';
 
 var registry = require('./nuclear.registry'),
@@ -617,7 +647,7 @@ nuclearSystem.context = function nuclearSystemContext() {
 
 module.exports = nuclearSystem;
 
-},{"./nuclear.events":9,"./nuclear.registry":10}],12:[function(require,module,exports){
+},{"./nuclear.events":9,"./nuclear.registry":11}],13:[function(require,module,exports){
 'use strict';
 
 var resolver;
@@ -692,13 +722,13 @@ Registry.prototype.module = function registryModule(name) {
 Registry.prototype.component = function registryComponent(name) {
   var component, moduleName;
 
-  if ((moduleName = resolver.module(name))) {
-    return this.module(moduleName).component(resolver.name(name));
-  }
-
   component = this.components[name];
 
   if (component) return component;
+
+  if ((moduleName = resolver.module(name))) {
+    return this.module(moduleName).component(resolver.name(name));
+  }
 
   throw new Error();
 };
@@ -706,13 +736,13 @@ Registry.prototype.component = function registryComponent(name) {
 Registry.prototype.entity = function registryEntity(name) {
   var entity, moduleName;
 
-  if ((moduleName = resolver.module(name))) {
-    return this.module(moduleName).entity(resolver.name(name));
-  }
-
   entity = this.entities[name];
 
   if (entity) return entity;
+
+  if ((moduleName = resolver.module(name))) {
+    return this.module(moduleName).entity(resolver.name(name));
+  }
 
   throw new Error();
 };
@@ -720,20 +750,20 @@ Registry.prototype.entity = function registryEntity(name) {
 Registry.prototype.system = function registrySystem(name) {
   var system, moduleName;
 
-  if ((moduleName = resolver.module(name))) {
-    return this.module(moduleName).system(resolver.name(name));
-  }
-
   system = this.systems[name];
 
   if (system) return system;
+  
+  if ((moduleName = resolver.module(name))) {
+    return this.module(moduleName).system(resolver.name(name));
+  }
 
   throw new Error();
 };
 
 module.exports = Registry;
 
-},{"./resolver":13}],13:[function(require,module,exports){
+},{"./resolver":14}],14:[function(require,module,exports){
 'use strict';
 
 var resolver, rValidPath;
@@ -787,7 +817,7 @@ resolver.identity = function resolverIdentity(path) {
   throw new Error();
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 function Scheduler(msPerUpdate, extrapolation) {
@@ -835,15 +865,16 @@ Scheduler.prototype.listen = function schedulerListen(){
 
 module.exports = Scheduler;
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 var nuclearComponent = require('./nuclear.component'),
     nuclearSystem = require('./nuclear.system'),
     nuclearEvents = require('./nuclear.events'),
+    nuclearQuery = require('./nuclear.query'),
     resolver = require('./resolver'),
     Scheduler = require('./scheduler'),
-    eventsOptions = {};
+    registry = require('./nuclear.registry');
 
 /**
  * The System constructor
@@ -864,84 +895,34 @@ function System(name, components, definition, moduleName, options) {
   });
   this.moduleName = moduleName;
 
-  this._context = Object.create(options.context || null);
-
-  this.entities = [];
-  this._deferredEntities = [];
   this._sorterManager = Object.create({
     comparator: function () {},
     toDeferred: false
   });
 
   this._componentPacks = Object.create(null);
-  this._removeEntities = Object.create(null);
 
   this._priority = 0;
 
   this._scheduler = new Scheduler(options.msPerUpdate, options.extrapolation);
   this._scheduler.start();
   this._schedulerCallback = systemSchedulerCallback.bind(this);
-
-  systemListenComponents(this, this.components);
-
+  
   if (options.disable !== undefined) {
     systemDisableSystems(this, options.disable);
   }
 
-  this.listen();
+  systemListen(this);
+  systemGenerateQuery(this);
 }
-
-/**
- * Check if the entity parameter is valid for this system
- * If No : return false
- * If Yes : add the entity to the entities list of the system, and return true
- * @param {number} entity The entity to add
- */
-System.prototype.add = function SystemAdd(entity) {
-  if (this.entities.indexOf(entity) > -1) return false;
-
-  var componentPack = this.check(entity);
-  if (componentPack === null) return false;
-
-  this.entities.push(entity);
-  this._componentPacks[entity] = componentPack;
-
-  return true;
-};
-
-/**
- * Remove the selected entity frome the system garbage list
- * @param  {number} entity The selected entity
- * @return {boolean}        If the entity is in the system, it returns true, in other case, it returns false
- */
-System.prototype.remove = function SystemRemove(entity) {
-  var index = this.entities.indexOf(parseInt(entity));
-  if (index < 0) return false;
-
-  this.entities.splice(index, 1);
-  delete this._componentPacks[entity];
-
-  return true;
-};
 
 /**
  * Check if an entity is runnable by the system
  * @param  {number} entity The selected entity
  * @return {null/object}   Return null if the entity isn't runnable, return its components in other case
  */
-System.prototype.check = function SystemCheck(entity) {
-  var componentPack = Object.create(null),
-      i, comp;
-
-  for (i = this.components.length - 1; i >= 0; i--) {
-    comp = nuclearComponent(this.components[i]).of(entity);
-
-    if (comp === undefined) return null;
-
-    componentPack[this.aliases[i]] = comp;
-  }
-
-  return componentPack;
+System.prototype.check = function SystemDefinitionCheck(entity) {
+  return (this._componentPacks[entity] !== undefined);
 };
 
 /**
@@ -976,7 +957,7 @@ System.prototype.once = function(entity){
     var componentPack = self._componentPacks[entity],
         toReturn;
     nuclearEvents.trigger('system:before:' + self.identity(), entity, componentPack, self.name, self.moduleName);
-    toReturn = systemDefinitionRunEntity(self, entity, componentPack);
+    toReturn = systemRunEntity(self, entity, componentPack);
     nuclearEvents.trigger('system:after:' + self.identity(), entity, componentPack, self.name, self.moduleName);
     return toReturn;
   }
@@ -1006,16 +987,9 @@ System.prototype.autosort = function SystemAutoSort(comparator) {
     return this._autosortComparator;
   }
 
-  this._autosortComparator = comparator.bind(this._context);
+  this._autosortComparator = comparator;
 
   return this;
-};
-
-/**
- * Refresh the system entities list
- */
-System.prototype.refresh = function SystemRefresh() {
-  systemParseDeferred(this);
 };
 
 /**
@@ -1027,73 +1001,77 @@ System.prototype.identity = function SystemIdentity(){
   return this.name+' from '+this.moduleName;
 };
 
-System.prototype.listen = function SystemListen(){
+/**
+ * Aliases this System with the alias param
+ * @return {System}    The System
+ */
+System.prototype.alias = function nuclearEntityAlias(alias){
+  registry.components[alias] = this;
+  return this;
+};
+
+function systemGenerateQuery(self){
+  var query, i, component;
+
+  query = '';
+  for(i = 0; i < self.components.length; i++){
+    component = self.components[i];
+    query += component;
+
+    if(i !== self.components.length-1){
+      query += ' ';
+    }
+  }
+  self.query = nuclearQuery.live(query);
+  self.entities = self.query.entities;
+  self.query.listen(systemQueryUpdate.bind(self));
+}
+
+function systemQueryUpdate(entity, state){
+  /*jshint validthis:true */
+  if(state){
+    this.componentPacks[entity] = systemGeneratePack(this, entity);
+  }
+  else{
+    delete this.componentPacks[entity];
+  }
+}
+
+function systemGeneratePack(self, entity){
+  var i, component, componentPack;
+
+  for (i = self.components.length - 1; i >= 0; i--) {
+    component = nuclearComponent(self.components[i]).of(entity);
+    if (component === undefined) return null;
+    componentPack[self.components[i]] = component;
+  }
+
+  return componentPack;
+}
+
+function systemListen(self){
   var eventsOptions = {
-    context: this
+    context: self
   };
 
   nuclearEvents.on('system:after_running', function () {
-    if (this._sorterManager.toDeferred) {
-      this.entities.sort(this._sorterManager.comparator);
-      this._sorterManager.toDeferred = false;
+    if (self._sorterManager.toDeferred) {
+      self.entities.sort(self._sorterManager.comparator);
+      self._sorterManager.toDeferred = false;
     }
   }, eventsOptions);
-
-  nuclearEvents.on('system:before_running', function () {
-    systemParseDeferred(this);
-  }, eventsOptions);
-};
+}
 
 function systemSchedulerCallback(deltaTime){
   /*jshint validthis:true */
   var length = this.entities.length;
   for (var i = 0; i < length; i++) {
-    systemDefinitionRunEntity(this, this.entities[i], this._componentPacks[this.entities[i]], deltaTime);
+    systemRunEntity(this, this.entities[i], this._componentPacks[this.entities[i]], deltaTime);
   }
 }
 
-function systemDefinitionRunEntity(self, entity, componentPack, deltaTime) {
+function systemRunEntity(self, entity, componentPack, deltaTime) {
   return self.definition(entity, componentPack, nuclearSystem.context(), deltaTime);
-}
-
-function systemParseDeferred(self) {
-  var entity;
-  for (var i = 0; i < self._deferredEntities.length; i++) {
-    entity = self._deferredEntities[i];
-
-    if (self._removeEntities[entity] !== undefined) {
-      self.remove(entity);
-      delete self._removeEntities[entity];
-    } else {
-      self.add(entity);
-    }
-  }
-
-  self._deferredEntities.length = 0;
-}
-
-function systemAddToDeferred(entity) {
-  this._deferredEntities.push(entity);// jshint ignore:line
-}
-
-function systemAddToDeferredAndRemove(entity, componentName) {
-  this._deferredEntities.push(entity);// jshint ignore:line
-  this._removeEntities[entity] = componentName;// jshint ignore:line
-}
-
-function systemListenComponents(self, components) {
-  var options = eventsOptions,
-      i;
-
-  options.context = self;
-
-  for (i = 0; i < components.length; i++) {
-    nuclearEvents.on('component:add:' + components[i], systemAddToDeferred, options);
-    nuclearEvents.on('component:enable:' + components[i], systemAddToDeferred, options);
-
-    nuclearEvents.on('component:remove:' + components[i], systemAddToDeferredAndRemove, options);
-    nuclearEvents.on('component:disable:' + components[i], systemAddToDeferredAndRemove, options);
-  }
 }
 
 function systemDisableSystems(self, systems) {
@@ -1103,8 +1081,7 @@ function systemDisableSystems(self, systems) {
 }
 
 module.exports = System;
-
-},{"./nuclear.component":7,"./nuclear.events":9,"./nuclear.system":11,"./resolver":13,"./scheduler":14}],16:[function(require,module,exports){
+},{"./nuclear.component":7,"./nuclear.events":9,"./nuclear.query":10,"./nuclear.registry":11,"./nuclear.system":12,"./resolver":14,"./scheduler":15}],17:[function(require,module,exports){
 'use strict';
 
 var pool, watchers;
@@ -1119,7 +1096,7 @@ window.nuclear.import([watchers]);
 window.Pool = pool.Pool;
 window.FixedPool = pool.FixedPool;
 
-},{"./core/index":5,"./modules/core.watchers":17,"./pool":22}],17:[function(require,module,exports){
+},{"./core/index":5,"./modules/core.watchers":18,"./pool":23}],18:[function(require,module,exports){
 'use strict';
 
 var nuclear, WatcherComponent, watchSystem;
@@ -1134,7 +1111,7 @@ module.exports = nuclear.module('core.watchers', [])
   })
   .system('watch', ['watchers'], watchSystem);
 
-},{"./../../core/index":5,"./watch-system":18,"./watcher-component":19}],18:[function(require,module,exports){
+},{"./../../core/index":5,"./watch-system":19,"./watcher-component":20}],19:[function(require,module,exports){
 'use strict';
 
 function watchSystem(e) {
@@ -1157,7 +1134,7 @@ function watchSystem(e) {
 
 module.exports = watchSystem;
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var nuclear;
@@ -1272,7 +1249,7 @@ WatcherComponent.prototype._unwatch = function _watcherComponentUnwatch(path) {
 
 module.exports = WatcherComponent;
 
-},{"./../../core/index":5}],20:[function(require,module,exports){
+},{"./../../core/index":5}],21:[function(require,module,exports){
 'use strict';
 
 function FixedPool(factory, options) {
@@ -1351,7 +1328,7 @@ FixedPool.defaults = {
 
 module.exports = FixedPool;
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 function Pool(factory, options) {
@@ -1444,10 +1421,10 @@ Pool.defaults = {
 
 module.exports = Pool;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 exports.Pool = require('./Pool');
 exports.FixedPool = require('./FixedPool');
 
-},{"./FixedPool":20,"./Pool":21}]},{},[16]);
+},{"./FixedPool":21,"./Pool":22}]},{},[17]);

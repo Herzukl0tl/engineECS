@@ -72,13 +72,13 @@ Registry.prototype.module = function registryModule(name) {
 Registry.prototype.component = function registryComponent(name) {
   var component, moduleName;
 
-  if ((moduleName = resolver.module(name))) {
-    return this.module(moduleName).component(resolver.name(name));
-  }
-
   component = this.components[name];
 
   if (component) return component;
+
+  if ((moduleName = resolver.module(name))) {
+    return this.module(moduleName).component(resolver.name(name));
+  }
 
   throw new Error();
 };
@@ -86,13 +86,13 @@ Registry.prototype.component = function registryComponent(name) {
 Registry.prototype.entity = function registryEntity(name) {
   var entity, moduleName;
 
-  if ((moduleName = resolver.module(name))) {
-    return this.module(moduleName).entity(resolver.name(name));
-  }
-
   entity = this.entities[name];
 
   if (entity) return entity;
+
+  if ((moduleName = resolver.module(name))) {
+    return this.module(moduleName).entity(resolver.name(name));
+  }
 
   throw new Error();
 };
@@ -100,13 +100,13 @@ Registry.prototype.entity = function registryEntity(name) {
 Registry.prototype.system = function registrySystem(name) {
   var system, moduleName;
 
-  if ((moduleName = resolver.module(name))) {
-    return this.module(moduleName).system(resolver.name(name));
-  }
-
   system = this.systems[name];
 
   if (system) return system;
+  
+  if ((moduleName = resolver.module(name))) {
+    return this.module(moduleName).system(resolver.name(name));
+  }
 
   throw new Error();
 };

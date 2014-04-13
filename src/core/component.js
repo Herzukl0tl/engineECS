@@ -1,6 +1,7 @@
 'use strict';
 
-var nuclearEvents = require('./nuclear.events');
+var nuclearEvents = require('./nuclear.events'),
+    registry = require('./nuclear.registry');
 
 /**
  * Component constructor
@@ -172,4 +173,12 @@ Component.prototype.identity = function ComponentIdentity(){
   return this.name+' from '+this.moduleName;
 };
 
+/**
+ * Aliases this Component with the alias param
+ * @return {Component}    The Component
+ */
+Component.prototype.alias = function nuclearEntityAlias(alias){
+  registry.components[alias] = this;
+  return this;
+};
 module.exports = Component;
