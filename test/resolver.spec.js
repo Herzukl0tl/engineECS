@@ -1,14 +1,12 @@
 'use strict';
 
-/* global beforeEach: false */
 /* global describe: false */
 /* global it:false */
 /* global expect: false */
-/* global jasmine: false */
 
 var resolver;
 
-resolver = require('./../src/core/resolver');
+resolver = require('../src/core/resolver');
 
 describe('Resolver spec', function () {
   describe('resolver.name()', function () {

@@ -7,6 +7,10 @@
       return {x : data.x, y : data.y}
     });
 
+    t.component('velocity', function () {
+      return {};
+    });
+
     var m = nuclear.module('test', ['test1']);
 
     m.component('position', function(entity, data){
@@ -32,7 +36,16 @@
 
     nuclear.import([t, m]);
 
+    window.positions = nuclear.query('position from test1 position from test, velocity from test1', {enabled: true}).listen(function (e, state) {
+      if (state) console.log('ENTITY ADDED', e);
+      else console.log('ENTITY REMOVED', e);
+    });
+
+    nuclear.component('velocity').add(nuclear.entity.create());
+
     var entity = nuclear.entity('mover from test').create({x : 0, y : 5});
+
+
     var b = nuclear.entity.create();
 
     nuclear.component('position').share(entity, b);
@@ -42,6 +55,7 @@
     console.log(nuclear.component.all(entity));
 
     entity = nuclear.entity('moverBis from test').create({x : 20, y : 5});
+    //nuclear.component('velocity').add(entity);
 
     nuclear.component('position from test1').disable(entity);
 

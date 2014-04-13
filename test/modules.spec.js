@@ -8,18 +8,18 @@
 
 var nuclear, Module, Component, Entity, System;
 
-nuclear = require('./../src/core');
+nuclear = require('../src/core');
 
-Module = require('./../src/core/module');
-Component = require('./../src/core/component');
-Entity = require('./../src/core/entity');
-System = require('./../src/core/system');
+Module = require('../src/core/module');
+Component = require('../src/core/component');
+Entity = require('../src/core/entity');
+System = require('../src/core/system');
 
 beforeEach(function () {
   nuclear.registry.clear();
 });
 
-describe('Nuclear modules', function () {
+describe('Modules spec', function () {
   it('it should define a module', function () {
     var myModule = nuclear.module('my-module', []);
 

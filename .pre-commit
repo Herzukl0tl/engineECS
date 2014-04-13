@@ -2,4 +2,4 @@
 #
 # Pre-commit hooks
 
-gulp lint test
+grunt lint test

@@ -11,6 +11,7 @@ nuclear.registry  = require('./nuclear.registry');
 nuclear.component = require('./nuclear.component');
 nuclear.entity    = require('./nuclear.entity');
 nuclear.system    = require('./nuclear.system');
+nuclear.query     = require('./nuclear.query');
 
 nuclear.module = function nuclearModule(name, deps) {
   var module;
